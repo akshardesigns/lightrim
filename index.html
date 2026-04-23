@@ -1,0 +1,746 @@
+<!doctype html><html lang="id" class="h-full"> <head>  <meta charset="UTF-8">  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Color Decision Generator</title>  <script src="https://cdn.tailwindcss.com/3.4.17"></script>  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">  <style>
+    :root { --accent: #18181b; --accent-soft: #f4f4f5; }
+    * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { font-family: 'Geist', system-ui, sans-serif; background: #fafafa; color: #09090b; }
+    .font-serif { font-family: 'Instrument Serif', serif; }
+    .font-mono { font-family: 'Geist Mono', monospace; }
+    .swatch-transition { transition: background-color 0.6s cubic-bezier(0.4,0,0.2,1), color 0.6s cubic-bezier(0.4,0,0.2,1), border-color 0.6s cubic-bezier(0.4,0,0.2,1); }
+    .fade-in { animation: fadeIn 0.6s cubic-bezier(0.4,0,0.2,1) both; }
+    .slide-up { animation: slideUp 0.7s cubic-bezier(0.4,0,0.2,1) both; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+    .chip { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+    .chip:hover { transform: translateY(-1px); }
+    .chip-active { background:#09090b!important; color:#fafafa!important; border-color:#09090b!important; }
+    .toggle-option { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+    .btn-primary { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden; }
+    .btn-primary:hover { transform:translateY(-1px); box-shadow:0 10px 30px -10px rgba(0,0,0,0.3); }
+    .btn-primary:active { transform:translateY(0); }
+    .swatch-card { transition: all 0.4s cubic-bezier(0.4,0,0.2,1); }
+    .swatch-card:hover { transform:translateY(-2px); }
+    .copy-btn { transition: all 0.2s ease; }
+    .shuffle-icon { transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+    .shuffle-btn:hover .shuffle-icon { transform:rotate(180deg); }
+    .grid-pattern { background-image: linear-gradient(to right,rgba(0,0,0,0.04) 1px,transparent 1px), linear-gradient(to bottom,rgba(0,0,0,0.04) 1px,transparent 1px); background-size:60px 60px; }
+    select { appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 1rem center; padding-right:2.5rem; }
+    .accent-text { color:var(--accent); }
+    .accent-bg { background-color:var(--accent); }
+    .accent-border { border-color:var(--accent); }
+    .preview-card { transition:background 0.6s ease, color 0.6s ease; }
+    .pulse-dot { animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ===== SOCIAL CARD STYLES ===== */
+    .social-card { font-family:'Space Grotesk',sans-serif; position:relative; overflow:hidden; border-radius:20px; box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
+    .social-card .brand-logo { font-weight:700; letter-spacing:-0.5px; display:flex; align-items:center; gap:6px; }
+    .social-card .brand-logo span.x-mark { font-style:italic; font-weight:900; }
+    .social-card .tag-pill { border-radius:999px; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:5px 14px; border:1.5px solid; display:inline-block; }
+    .social-card .big-month { font-size:88px; font-weight:900; line-height:0.85; letter-spacing:-4px; opacity:0.12; position:absolute; right:-10px; top:50%; transform:translateY(-50%) rotate(90deg); transform-origin:center; pointer-events:none; white-space:nowrap; }
+    .social-card .headline { font-size:28px; font-weight:800; line-height:1.1; letter-spacing:-0.5px; }
+    .social-card .subline { font-size:11px; line-height:1.55; opacity:0.75; }
+    .social-card .info-bar { font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; }
+    .social-card .cta-btn { border-radius:8px; font-weight:700; font-size:12px; padding:10px 0; width:100%; text-align:center; letter-spacing:0.3px; border:none; cursor:pointer; }
+    .social-card .photo-blob { border-radius:16px; overflow:hidden; position:relative; }
+    .social-card .photo-blob img { width:100%; height:100%; object-fit:cover; }
+    .social-card .app-mockup { border-radius:14px; overflow:hidden; border:2px solid rgba(255,255,255,0.2); }
+    .card-strip { display:flex; gap:14px; align-items:stretch; justify-content:center; }
+    .card-strip .card-item { flex:1; min-width:0; }
+    .card-strip .card-item.center { flex:1.15; position:relative; top:-10px; z-index:10; }
+    body { box-sizing:border-box; }
+  </style>
+ </head>
+ <body class="h-full w-full">
+  <div class="w-full min-h-full">
+   <!-- Navigation -->
+   <header class="w-full border-b border-zinc-200 bg-white/80 backdrop-blur-xl sticky top-0 z-40">
+    <nav class="max-w-7xl mx-auto px-6 lg:px-10 py-4 flex items-center justify-between">
+     <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-zinc-900 flex items-center justify-center accent-bg swatch-transition">
+       <div class="w-3 h-3 rounded-sm bg-white"></div>
+      </div><span class="font-medium tracking-tight">Chroma</span>
+      <span class="font-mono text-[10px] text-zinc-400 ml-1 px-2 py-0.5 bg-zinc-100 rounded-full">v1.0</span>
+     </div>
+     <div class="hidden md:flex items-center gap-8 text-sm text-zinc-600">
+      <a href="#generator" class="hover:text-zinc-900 transition">Generator</a>
+      <a href="#how" class="hover:text-zinc-900 transition">How it works</a>
+      <a href="#philosophy" class="hover:text-zinc-900 transition">Philosophy</a>
+     </div>
+     <a href="#generator" class="text-sm font-medium flex items-center gap-1.5 hover:gap-2 transition-all">Start <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+    </nav>
+   </header>
+
+   <main>
+    <!-- HERO SECTION -->
+    <section class="w-full relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+     <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-pink-600/5"></div>
+     <div class="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
+     <div class="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-pink-400 to-rose-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-x-1/3 translate-y-1/3"></div>
+     <div class="absolute inset-0 grid-pattern opacity-30"></div>
+     <div class="max-w-7xl mx-auto px-6 lg:px-10 pt-20 lg:pt-32 pb-20 lg:pb-28 relative">
+      <div class="flex justify-center mb-10 slide-up">
+       <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-zinc-200 rounded-full text-xs font-medium text-zinc-600 shadow-sm">
+        <span class="w-1.5 h-1.5 rounded-full accent-bg pulse-dot swatch-transition"></span>
+        <span id="hero-badge-text">Design Intelligence</span>
+       </div>
+      </div>
+      <h1 class="text-center text-5xl md:text-7xl lg:text-[88px] leading-[1.02] tracking-tight font-medium slide-up" style="animation-delay:0.1s">
+       <span id="hero-headline-1">Pilih warna</span><br>
+       <span class="font-serif italic text-zinc-500" id="hero-headline-2">berdasarkan pesan,</span><br>
+       <span id="hero-headline-3">bukan selera.</span>
+      </h1>
+      <p id="hero-subheadline" class="text-center text-base md:text-lg text-zinc-500 max-w-xl mx-auto mt-8 leading-relaxed slide-up" style="animation-delay:0.2s">Masukkan tujuan dan mood, kami bantu menentukan warna yang tepat — disertai alasan psikologi di balik setiap keputusan.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-12 slide-up" style="animation-delay:0.3s">
+       <a href="#generator" class="btn-primary accent-bg swatch-transition text-white px-6 py-3.5 rounded-full text-sm font-medium flex items-center gap-2">
+        <span id="hero-cta-text">Generate Colors</span>
+        <i data-lucide="sparkles" class="w-4 h-4"></i>
+       </a>
+       <a href="#how" class="px-6 py-3.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition flex items-center gap-2">Lihat cara kerja <i data-lucide="arrow-down" class="w-4 h-4"></i></a>
+      </div>
+      <div class="mt-20 slide-up" style="animation-delay:0.4s">
+       <div class="flex items-center justify-center gap-3 mb-6">
+        <div class="h-px w-12 bg-zinc-200"></div>
+        <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400">Live Output</span>
+        <div class="h-px w-12 bg-zinc-200"></div>
+       </div>
+       <div id="hero-preview-strip" class="flex gap-2 max-w-3xl mx-auto h-24">
+        <div class="flex-1 rounded-2xl swatch-transition" style="background:#fafafa;border:1px solid #e4e4e7"></div>
+        <div class="flex-1 rounded-2xl swatch-transition" style="background:#e4e4e7"></div>
+        <div class="flex-1 rounded-2xl swatch-transition" style="background:#a1a1aa"></div>
+        <div class="flex-1 rounded-2xl swatch-transition" style="background:#3f3f46"></div>
+        <div class="flex-1 rounded-2xl swatch-transition" style="background:#18181b"></div>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- GENERATOR SECTION -->
+    <section id="generator" class="w-full border-t border-zinc-200 bg-white">
+     <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
+      <div class="flex flex-col items-center text-center mb-16">
+       <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-4">01 — Input</span>
+       <h2 id="form-title" class="text-3xl md:text-5xl tracking-tight font-medium">Ceritakan konteks desainmu.</h2>
+       <p id="form-subtitle" class="text-zinc-500 mt-4 max-w-md">Empat pertanyaan cepat untuk memahami kebutuhanmu.</p>
+      </div>
+      <div class="max-w-3xl mx-auto">
+       <div class="bg-white border border-zinc-200 rounded-3xl p-6 md:p-10 shadow-sm">
+        <div class="pb-8 border-b border-zinc-100">
+         <div class="flex items-baseline justify-between mb-3">
+          <label for="field-purpose" class="flex items-center gap-2 text-sm font-medium"><span class="font-mono text-[10px] text-zinc-400">01</span>Tujuan desain</label>
+          <span class="text-xs text-zinc-400">Pilih satu</span>
+         </div>
+         <select id="field-purpose" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-sm font-medium focus:outline-none focus:border-zinc-900 focus:bg-white transition cursor-pointer">
+          <option value="jual">Jual / Promosi — dorong konversi</option>
+          <option value="edukasi">Edukasi — sampaikan informasi</option>
+          <option value="branding">Branding — bangun identitas</option>
+         </select>
+        </div>
+        <div class="py-8 border-b border-zinc-100">
+         <div class="flex items-baseline justify-between mb-3">
+          <label class="flex items-center gap-2 text-sm font-medium"><span class="font-mono text-[10px] text-zinc-400">02</span>Mood yang ingin disampaikan</label>
+          <span class="text-xs text-zinc-400">Pilih 1–3</span>
+         </div>
+         <div id="mood-chips" class="flex flex-wrap gap-2">
+          <button type="button" data-mood="tegas" class="chip px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400"><i data-lucide="zap" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Tegas</button>
+          <button type="button" data-mood="tenang" class="chip px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400"><i data-lucide="waves" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Tenang</button>
+          <button type="button" data-mood="playful" class="chip px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400"><i data-lucide="smile" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Playful</button>
+          <button type="button" data-mood="elegan" class="chip px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400"><i data-lucide="gem" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Elegan</button>
+          <button type="button" data-mood="urgent" class="chip px-4 py-2 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400"><i data-lucide="flame" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Urgent</button>
+         </div>
+        </div>
+        <div class="py-8 border-b border-zinc-100">
+         <div class="flex items-baseline justify-between mb-3">
+          <label class="flex items-center gap-2 text-sm font-medium"><span class="font-mono text-[10px] text-zinc-400">03</span>Fokus visual</label>
+          <span class="text-xs text-zinc-400">Toggle</span>
+         </div>
+         <div class="inline-flex bg-zinc-100 p-1 rounded-full">
+          <button type="button" data-focus="text" class="toggle-option focus-toggle px-5 py-2 rounded-full text-sm font-medium bg-white shadow-sm"><i data-lucide="type" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Text</button>
+          <button type="button" data-focus="image" class="toggle-option focus-toggle px-5 py-2 rounded-full text-sm font-medium text-zinc-500 hover:text-zinc-900"><i data-lucide="image" class="inline w-3.5 h-3.5 mr-1.5 -mt-0.5"></i>Image</button>
+         </div>
+        </div>
+        <div class="pt-8">
+         <div class="flex items-baseline justify-between mb-3">
+          <label for="field-audience" class="flex items-center gap-2 text-sm font-medium"><span class="font-mono text-[10px] text-zinc-400">04</span>Target audience</label>
+          <span class="text-xs text-zinc-400">Pilih satu</span>
+         </div>
+         <select id="field-audience" class="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-sm font-medium focus:outline-none focus:border-zinc-900 focus:bg-white transition cursor-pointer">
+          <option value="umum">Umum — semua kalangan</option>
+          <option value="profesional">Profesional — B2B, korporat</option>
+          <option value="anak-muda">Anak muda — Gen Z, kreatif</option>
+         </select>
+        </div>
+        <button id="generate-btn" class="btn-primary w-full mt-10 accent-bg swatch-transition text-white px-6 py-4 rounded-2xl text-sm font-medium flex items-center justify-center gap-2">
+         <span id="generate-btn-text">Generate Colors</span>
+         <i data-lucide="sparkles" class="w-4 h-4"></i>
+        </button>
+        <p class="text-center text-xs text-zinc-400 mt-4">Hasil disertai penjelasan psikologi warna &amp; rekomendasi penggunaan.</p>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- RESULT SECTION -->
+    <section id="result-section" class="w-full border-t border-zinc-200 bg-zinc-50 hidden">
+     <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+       <div>
+        <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-4 block">02 — Output</span>
+        <h2 class="text-3xl md:text-5xl tracking-tight font-medium">Rekomendasi warna.</h2>
+        <p class="text-zinc-500 mt-3" id="result-context">—</p>
+       </div>
+       <div class="flex items-center gap-2">
+        <button id="shuffle-btn" class="shuffle-btn flex items-center gap-2 px-4 py-2.5 bg-white border border-zinc-200 rounded-full text-sm font-medium hover:border-zinc-400 transition">
+         <i data-lucide="shuffle" class="shuffle-icon w-4 h-4"></i> Shuffle
+        </button>
+       </div>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-6">
+       <div class="lg:col-span-3 space-y-6">
+        <div class="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8">
+         <div class="flex items-center justify-between mb-6">
+          <div>
+           <h3 class="text-sm font-medium">Color Palette</h3>
+           <p class="text-xs text-zinc-500 mt-0.5">Klik swatch untuk copy hex code</p>
+          </div>
+          <span class="font-mono text-[10px] uppercase tracking-wider text-zinc-400">A</span>
+         </div>
+         <div id="palette-grid" class="grid grid-cols-5 gap-3"></div>
+        </div>
+        <div class="bg-white border border-zinc-200 rounded-3xl p-6 md:p-8">
+         <div class="flex items-center justify-between mb-6">
+          <div>
+           <h3 class="text-sm font-medium">Color Role</h3>
+           <p class="text-xs text-zinc-500 mt-0.5">Peran setiap warna dalam hierarki visual</p>
+          </div>
+          <span class="font-mono text-[10px] uppercase tracking-wider text-zinc-400">B</span>
+         </div>
+         <div id="roles-list" class="space-y-3"></div>
+        </div>
+       </div>
+       <div class="lg:col-span-2">
+        <div class="bg-zinc-900 text-zinc-50 rounded-3xl p-6 md:p-8 h-full flex flex-col">
+         <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-2">
+           <i data-lucide="lightbulb" class="w-4 h-4 text-zinc-400"></i>
+           <h3 class="text-sm font-medium">Design Reasoning</h3>
+          </div>
+          <span class="font-mono text-[10px] uppercase tracking-wider text-zinc-500">C</span>
+         </div>
+         <div class="flex-1 space-y-6">
+          <div>
+           <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Insight</span>
+           <p id="explanation-main" class="font-serif text-2xl leading-snug mt-2 text-zinc-50">—</p>
+          </div>
+          <div class="border-t border-zinc-800 pt-6">
+           <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Psikologi warna</span>
+           <p id="explanation-psychology" class="text-sm text-zinc-300 leading-relaxed mt-2">—</p>
+          </div>
+          <div class="border-t border-zinc-800 pt-6">
+           <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Rekomendasi penggunaan</span>
+           <ul id="explanation-tips" class="text-sm text-zinc-300 space-y-2 mt-2"></ul>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+
+      <!-- LIVE PREVIEW -->
+      <div class="mt-10">
+       <div class="mb-8">
+        <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400">03 — Live Preview</span>
+        <h3 class="text-2xl tracking-tight font-medium mt-1">Social media cards dalam warna pilihanmu.</h3>
+       </div>
+
+       <!-- Social Card Preview Container -->
+       <div id="preview-card" class="preview-card rounded-3xl overflow-hidden p-10 relative" style="background:#f0f0f5; min-height:600px;">
+        <!-- BG pattern -->
+        <div class="absolute inset-0 opacity-20" style="background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,0.08) 1px,transparent 0);background-size:28px 28px;"></div>
+
+        <!-- Header bar (like @brandbyteemee bar) -->
+        <div class="relative z-10 flex items-center justify-between mb-8">
+         <div id="preview-logo-pill" class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold" style="background:#1a1a2e;color:white;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 12h8M12 8v8"/></svg>
+          <span id="preview-brand-name">@yourbrand</span>
+         </div>
+         <div id="preview-swipe-pill" class="px-5 py-2 rounded-full text-sm font-bold flex items-center gap-1" style="background:#6d28d9;color:white;">
+          Swipe <span style="font-size:16px">»</span>
+         </div>
+        </div>
+
+        <!-- Title area -->
+        <div class="relative z-10 text-center mb-6">
+         <h2 id="preview-main-title" class="text-4xl font-black tracking-tight" style="color:#1a1a2e;">Social Media <span id="preview-title-accent" style="color:#6d28d9;">Designs</span></h2>
+         <p id="preview-subtitle" class="text-sm mt-1" style="color:#64748b;">We designed for a borderless real estate experience.</p>
+         <div class="flex items-center justify-center gap-3 mt-4">
+          <div id="preview-for-pill" class="px-6 py-2 rounded-lg text-sm font-bold" style="background:#1a1a2e;color:white;">For</div>
+          <div id="preview-brand-pill" class="px-6 py-2 rounded-lg text-sm font-bold" style="background:#6d28d9;color:white;">YourBrand</div>
+         </div>
+        </div>
+
+        <!-- 3 Cards Strip -->
+        <div class="relative z-10 card-strip" id="card-strip">
+         <!-- Card 1 -->
+         <div class="card-item" id="card-1">
+          <div class="social-card h-full" id="social-card-1" style="background:#1a1a2e;min-height:340px;">
+           <!-- content injected -->
+          </div>
+         </div>
+         <!-- Card 2 (center, elevated) -->
+         <div class="card-item center" id="card-2">
+          <div class="social-card h-full" id="social-card-2" style="background:#6d28d9;min-height:360px;">
+           <!-- content injected -->
+          </div>
+         </div>
+         <!-- Card 3 -->
+         <div class="card-item" id="card-3">
+          <div class="social-card h-full" id="social-card-3" style="background:#1a1a2e;min-height:340px;">
+           <!-- content injected -->
+          </div>
+         </div>
+        </div>
+
+        <!-- Footer bar -->
+        <div id="preview-footer" class="relative z-10 text-center text-xs font-semibold mt-8 py-4 rounded-xl" style="background:#6d28d9;color:white;letter-spacing:0.3px;">
+         © 2025 Social Media Designs Curated By YourBrand.
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how" class="w-full border-t border-zinc-200 bg-white">
+     <div class="max-w-7xl mx-auto px-6 lg:px-10 py-20 lg:py-28">
+      <div class="max-w-2xl mb-16">
+       <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-4 block">Proses</span>
+       <h2 class="text-3xl md:text-5xl tracking-tight font-medium">Dari input jadi keputusan.</h2>
+       <p class="text-zinc-500 mt-4">Tiga langkah sederhana, satu output yang beralasan.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+       <div class="bg-zinc-50 rounded-3xl p-8 border border-zinc-100">
+        <div class="w-10 h-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center mb-6"><i data-lucide="message-square-quote" class="w-4 h-4"></i></div>
+        <span class="font-mono text-[10px] text-zinc-400">Step 01</span>
+        <h4 class="text-lg font-medium mt-1 mb-2">Ceritakan pesan</h4>
+        <p class="text-sm text-zinc-500 leading-relaxed">Tujuan, mood, dan audiens. Kami pahami konteks sebelum memilih warna.</p>
+       </div>
+       <div class="bg-zinc-50 rounded-3xl p-8 border border-zinc-100">
+        <div class="w-10 h-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center mb-6"><i data-lucide="brain-circuit" class="w-4 h-4"></i></div>
+        <span class="font-mono text-[10px] text-zinc-400">Step 02</span>
+        <h4 class="text-lg font-medium mt-1 mb-2">Terjemahkan ke warna</h4>
+        <p class="text-sm text-zinc-500 leading-relaxed">Pesan diterjemahkan menjadi palette berdasarkan prinsip psikologi warna.</p>
+       </div>
+       <div class="bg-zinc-50 rounded-3xl p-8 border border-zinc-100">
+        <div class="w-10 h-10 rounded-xl bg-white border border-zinc-200 flex items-center justify-center mb-6"><i data-lucide="file-check-2" class="w-4 h-4"></i></div>
+        <span class="font-mono text-[10px] text-zinc-400">Step 03</span>
+        <h4 class="text-lg font-medium mt-1 mb-2">Dapat hasil + alasan</h4>
+        <p class="text-sm text-zinc-500 leading-relaxed">Bukan hanya HEX code. Setiap warna disertai peran dan reasoning-nya.</p>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section id="philosophy" class="w-full border-t border-zinc-200 bg-zinc-50">
+     <div class="max-w-4xl mx-auto px-6 lg:px-10 py-20 lg:py-28 text-center">
+      <span class="font-mono text-[10px] uppercase tracking-widest text-zinc-400 mb-6 block">Philosophy</span>
+      <h2 class="text-3xl md:text-5xl lg:text-6xl tracking-tight font-medium leading-tight">Warna adalah <span class="font-serif italic text-zinc-500">keputusan</span>,<br>bukan <span class="font-serif italic text-zinc-500">dekorasi</span>.</h2>
+      <p class="text-zinc-500 mt-8 max-w-xl mx-auto leading-relaxed">Tool ini dibangun untuk desainer yang ingin setiap pilihan warnanya punya alasan — baik saat mempresentasikan ke klien maupun saat meyakinkan diri sendiri.</p>
+     </div>
+    </section>
+   </main>
+
+   <footer class="w-full border-t border-zinc-200 bg-white">
+    <div class="max-w-7xl mx-auto px-6 lg:px-10 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+     <div class="flex items-center gap-2">
+      <div class="w-5 h-5 rounded-md bg-zinc-900 accent-bg swatch-transition flex items-center justify-center">
+       <div class="w-2 h-2 rounded-sm bg-white"></div>
+      </div>
+      <span id="footer-text" class="text-sm text-zinc-500">Chroma — Color Decision Generator</span>
+     </div>
+     <div class="text-xs text-zinc-400 font-mono">Designed with intention.</div>
+    </div>
+   </footer>
+
+   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-5 py-3 rounded-full text-sm font-medium shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2">
+    <i data-lucide="check-circle-2" class="w-4 h-4"></i> <span id="toast-text">Copied</span>
+   </div>
+  </div>
+
+  <script>
+    // ============= COLOR LIBRARY =============
+    const colorLibrary = {
+      tegas: [
+        ['#0A0A0A','#1F1F1F','#404040','#DC2626','#FAFAFA'],
+        ['#18181B','#27272A','#52525B','#EF4444','#FAFAFA'],
+        ['#000000','#1A1A1A','#737373','#B91C1C','#F5F5F5'],
+      ],
+      tenang: [
+        ['#F8FAFC','#E2E8F0','#94A3B8','#0369A1','#0F172A'],
+        ['#F0F9FF','#DBEAFE','#93C5FD','#2563EB','#1E293B'],
+        ['#F0FDF4','#DCFCE7','#86EFAC','#059669','#14532D'],
+      ],
+      playful: [
+        ['#FFFBEB','#FEF3C7','#FBBF24','#EC4899','#0F172A'],
+        ['#FEF2F2','#FCE7F3','#F472B6','#8B5CF6','#1E1B4B'],
+        ['#ECFEFF','#CFFAFE','#22D3EE','#F59E0B','#164E63'],
+      ],
+      elegan: [
+        ['#FAFAF9','#E7E5E4','#A8A29E','#44403C','#0C0A09'],
+        ['#F5F5F4','#D6D3D1','#78716C','#292524','#1C1917'],
+        ['#FFFBF5','#F3E8D9','#B08D57','#3D2E1F','#1A0F08'],
+      ],
+      urgent: [
+        ['#FFFFFF','#FEF2F2','#FCA5A5','#DC2626','#450A0A'],
+        ['#FFF7ED','#FED7AA','#FB923C','#EA580C','#431407'],
+        ['#FEFCE8','#FEF08A','#EAB308','#DC2626','#1C1917'],
+      ],
+    };
+
+    const moodDescriptions = {
+      tegas:{ psychology:'Kontras tinggi antara hitam pekat dan aksen merah menciptakan kejelasan dan otoritas. Otak memproses kontras ini sebagai "penting" dalam hitungan milidetik.', insight:'Kontras tinggi + aksen tajam = pesan yang tidak bisa diabaikan.' },
+      tenang:{ psychology:'Warna dingin seperti biru dan hijau menurunkan detak jantung. Saturasi rendah memberi ruang bernapas — cocok untuk membangun kepercayaan jangka panjang.', insight:'Saturasi rendah + tone dingin = ruang untuk berpikir.' },
+      playful:{ psychology:'Warna hangat dengan saturasi tinggi memicu dopamin. Kombinasi warm-cool menciptakan ritme visual yang terasa hidup dan ramah.', insight:'Saturasi tinggi + warna hangat = energi yang menular.' },
+      elegan:{ psychology:'Tone earth dan neutral dengan kontras halus menyampaikan kedewasaan. Mata tidak dipaksa — ini adalah warna yang "percaya diri" tanpa harus berteriak.', insight:'Neutral warm + kontras halus = premium tanpa pretensi.' },
+      urgent:{ psychology:'Merah dan oranye mengaktifkan respons fight-or-flight. Kontras ekstrem dengan putih menciptakan urgensi yang memaksa aksi dalam hitungan detik.', insight:'Merah saturasi penuh = keputusan yang harus diambil sekarang.' },
+    };
+
+    const audienceModifiers = {
+      'umum':'palette cukup universal untuk diterima berbagai demografi',
+      'profesional':'palette dikalibrasi untuk audiens B2B yang mengapresiasi kepercayaan dan kredibilitas',
+      'anak-muda':'palette condong ke tone yang modern dan digital-native, sesuai ekspektasi Gen Z',
+    };
+    const purposeContext = {
+      'jual':'Untuk mendorong konversi, fokus pada CTA yang stand-out',
+      'edukasi':'Untuk menyampaikan informasi, fokus pada keterbacaan dan tidak melelahkan mata',
+      'branding':'Untuk membangun identitas, fokus pada konsistensi dan memorability',
+    };
+    const focusTips = {
+      'text':['Gunakan Primary sebagai background teks utama','Text body pakai warna paling gelap untuk kontras AA+','Accent hanya untuk link atau call-to-action'],
+      'image':['Gunakan Secondary sebagai overlay foto (80% opacity)','Accent dipakai untuk badge atau tag di atas gambar','Hindari menumpuk terlalu banyak warna di atas image'],
+    };
+
+    const moodCopyMap = {
+      tegas:{ tagline:['Built for closers.','Backed by Your Brand','Welcome listings that never miss'], headline:['Built for closers.\nBacked by Your Brand','Welcome to\nThis Month', 'Your journey\njust got smoother'], sub:['Where your listings never stop and your deals never miss a beat.','May this month open doors to better opportunities and smoother journeys.','From photo to handshake — we\'ve simplified it all.'], cta:'Learn More', month:'Month', url:'www.yourbrand.com' },
+      tenang:{ tagline:['Breathe easy.','A calm approach','Your space awaits'], headline:['Design with\ncalm intention','Welcome to\nPeace of Mind','Your vision\nstarts here'], sub:['Steady, thoughtful decisions lead to lasting results.','Every detail designed to bring you clarity and confidence.','We guide you from first look to final handshake.'], cta:'Explore Now', month:'Focus', url:'www.yourbrand.com' },
+      playful:{ tagline:['Let\'s create!','Bold moves only','Color your world'], headline:['Make bold\nmoves today','Welcome to\nJuly ✨','Your dream\nstarts here'], sub:['Fun, fresh, and full of color — let\'s build something amazing.','New month, new energy, new possibilities just for you!','Express yourself boldly with designs that pop.'], cta:'Get Started', month:'Vibes', url:'www.yourbrand.com' },
+      elegan:{ tagline:['Crafted with care.','Refined for you','Excellence awaits'], headline:['Crafted with\nexquisite care','Welcome to\nElegance','Your brand,\nrefined'], sub:['Precision, taste, and timeless design at every touchpoint.','Where refinement meets purpose — excellence in every detail.','A sophisticated approach to brand identity and visual presence.'], cta:'Discover', month:'Style', url:'www.yourbrand.com' },
+      urgent:{ tagline:['Act now!','Limited time only','Don\'t miss out'], headline:['Last chance!\nAct now','This offer\nends soon','Don\'t miss\nthis deal'], sub:['Opportunities like this don\'t come twice. Make your move today.','The clock is ticking. Secure your spot before it\'s gone forever.','Time-sensitive offer — limited slots available right now.'], cta:'Claim Now', month:'Hurry', url:'www.yourbrand.com' },
+    };
+
+    // ============= STATE =============
+    const state = { purpose:'jual', moods:['tegas'], focus:'text', audience:'umum', currentPalette:null, shuffleIndex:0 };
+
+    // ============= HELPERS =============
+    function hexToRgb(hex) {
+      const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return r ? {r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)} : null;
+    }
+    function getLuminance(hex) {
+      const rgb = hexToRgb(hex);
+      if(!rgb) return 0;
+      const [r,g,b] = [rgb.r,rgb.g,rgb.b].map(v=>{ v=v/255; return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4); });
+      return 0.2126*r+0.7152*g+0.0722*b;
+    }
+    function getReadableText(bgHex) { return getLuminance(bgHex)>0.5?'#09090b':'#fafafa'; }
+    function showToast(text) {
+      const toast=document.getElementById('toast');
+      document.getElementById('toast-text').textContent=text;
+      toast.style.opacity='1'; toast.style.transform='translate(-50%,-8px)';
+      setTimeout(()=>{ toast.style.opacity='0'; toast.style.transform='translate(-50%,0)'; },1800);
+    }
+    async function copyToClipboard(text) {
+      try { await navigator.clipboard.writeText(text); showToast(`${text} copied`); }
+      catch(e) { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');showToast(`${text} copied`);}catch(err){} document.body.removeChild(ta); }
+    }
+
+    // ============= GENERATE LOGIC =============
+    function pickPalette() {
+      const moods = state.moods.length ? state.moods : ['tegas'];
+      const primaryMood = moods[0];
+      const variants = colorLibrary[primaryMood];
+      const palette = variants[state.shuffleIndex % variants.length];
+      if(moods.length>1) {
+        const secVariants = colorLibrary[moods[1]];
+        const secPalette = secVariants[state.shuffleIndex % secVariants.length];
+        return [palette[0],palette[1],palette[2],secPalette[3],palette[4]];
+      }
+      return [...palette];
+    }
+
+    function generateResult() {
+      const palette = pickPalette();
+      state.currentPalette = palette;
+      const accent = palette[3];
+      document.documentElement.style.setProperty('--accent', accent);
+      renderPalette(palette);
+      renderRoles(palette);
+      renderExplanation(palette);
+      renderSocialPreview(palette);
+      const moodText = state.moods.join(' + ') || 'tegas';
+      document.getElementById('result-context').textContent = `Tujuan: ${state.purpose} · Mood: ${moodText} · Fokus: ${state.focus} · Audience: ${state.audience}`;
+      const resultSection = document.getElementById('result-section');
+      resultSection.classList.remove('hidden');
+      resultSection.classList.add('fade-in');
+      setTimeout(()=>{ if(window.lucide) lucide.createIcons(); },10);
+    }
+
+    function renderPalette(palette) {
+      const grid = document.getElementById('palette-grid');
+      grid.innerHTML = '';
+      palette.forEach((color,i) => {
+        const textColor = getReadableText(color);
+        const card = document.createElement('button');
+        card.className = 'swatch-card swatch-transition rounded-2xl aspect-[3/4] flex flex-col justify-between p-4 text-left relative overflow-hidden border border-zinc-200 group slide-up';
+        card.style.background = color; card.style.color = textColor;
+        card.style.animationDelay = `${i*80}ms`;
+        card.innerHTML = `<div class="flex items-center justify-between"><span class="font-mono text-[10px] uppercase opacity-60">0${i+1}</span><div class="copy-btn opacity-0 group-hover:opacity-100 transition"><i data-lucide="copy" class="w-3 h-3"></i></div></div><div><div class="font-mono text-xs font-medium uppercase">${color}</div></div>`;
+        card.addEventListener('click',()=>copyToClipboard(color));
+        grid.appendChild(card);
+      });
+    }
+
+    function renderRoles(palette) {
+      const roleDefs = [
+        {label:'Primary',sub:'Background · dominan',index:0},
+        {label:'Secondary',sub:'Support · base',index:1},
+        {label:'Tertiary',sub:'Mid-tone · struktur',index:2},
+        {label:'Accent',sub:'Highlight · CTA',index:3},
+        {label:'Ink',sub:'Typography · teks',index:4},
+      ];
+      const list = document.getElementById('roles-list');
+      list.innerHTML = '';
+      roleDefs.forEach((role,i)=>{
+        const color = palette[role.index];
+        const item = document.createElement('div');
+        item.className='flex items-center gap-4 p-3 bg-zinc-50 rounded-xl slide-up';
+        item.style.animationDelay=`${i*60}ms`;
+        item.innerHTML=`<div class="w-11 h-11 rounded-lg swatch-transition border border-zinc-200 flex-shrink-0" style="background:${color}"></div><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><span class="text-sm font-medium">${role.label}</span><span class="font-mono text-[10px] text-zinc-400 uppercase">${color}</span></div><div class="text-xs text-zinc-500 mt-0.5">${role.sub}</div></div><button class="copy-role-btn text-xs text-zinc-500 hover:text-zinc-900 transition px-3 py-1.5 rounded-full hover:bg-white border border-transparent hover:border-zinc-200" data-color="${color}">Copy</button>`;
+        list.appendChild(item);
+      });
+      list.querySelectorAll('.copy-role-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>copyToClipboard(btn.dataset.color));
+      });
+    }
+
+    function renderExplanation(palette) {
+      const primaryMood = state.moods[0]||'tegas';
+      const moodData = moodDescriptions[primaryMood];
+      document.getElementById('explanation-main').textContent = moodData.insight;
+      document.getElementById('explanation-psychology').textContent = `${moodData.psychology} ${purposeContext[state.purpose]}, dan ${audienceModifiers[state.audience]}.`;
+      const tips = focusTips[state.focus];
+      document.getElementById('explanation-tips').innerHTML = tips.map(t=>`<li class="flex gap-2"><span class="text-zinc-500 flex-shrink-0">—</span><span>${t}</span></li>`).join('');
+    }
+
+    // ============= SOCIAL CARD PREVIEW =============
+    function renderSocialPreview(palette) {
+      const [primary, secondary, tertiary, accent, ink] = palette;
+      const mood = state.moods[0] || 'tegas';
+      const copy = moodCopyMap[mood] || moodCopyMap.tegas;
+
+      // Determine if palette is dark-dominant
+      const primaryDark = getLuminance(primary) < 0.3;
+      const accentDark = getLuminance(accent) < 0.3;
+
+      // BG of preview container — use tertiary as a soft bg
+      const previewBg = getLuminance(tertiary) > 0.6 ? tertiary : '#f0f0f5';
+      document.getElementById('preview-card').style.background = previewBg;
+
+      // Header pills
+      const logoPill = document.getElementById('preview-logo-pill');
+      logoPill.style.background = primary;
+      logoPill.style.color = getReadableText(primary);
+      logoPill.querySelector('span').textContent = '@yourbrand';
+
+      const swipePill = document.getElementById('preview-swipe-pill');
+      swipePill.style.background = accent;
+      swipePill.style.color = getReadableText(accent);
+
+      // Title area
+      document.getElementById('preview-main-title').style.color = getLuminance(previewBg) > 0.5 ? '#1a1a2e' : '#fafafa';
+      document.getElementById('preview-title-accent').style.color = accent;
+
+      const forPill = document.getElementById('preview-for-pill');
+      forPill.style.background = primary;
+      forPill.style.color = getReadableText(primary);
+
+      const brandPill = document.getElementById('preview-brand-pill');
+      brandPill.style.background = accent;
+      brandPill.style.color = getReadableText(accent);
+
+      // Footer
+      const footer = document.getElementById('preview-footer');
+      footer.style.background = accent;
+      footer.style.color = getReadableText(accent);
+
+      // === CARD 1 — "Built for closers" style ===
+      const card1 = document.getElementById('social-card-1');
+      const c1text = getReadableText(primary);
+      card1.style.background = primary;
+      card1.innerHTML = buildCard1HTML(primary, secondary, accent, ink, c1text, copy);
+
+      // === CARD 2 — "Welcome to Month" center big type ===
+      const card2 = document.getElementById('social-card-2');
+      const c2text = getReadableText(accent);
+      card2.style.background = `linear-gradient(145deg, ${accent} 0%, ${secondary} 100%)`;
+      card2.innerHTML = buildCard2HTML(accent, primary, tertiary, c2text, copy);
+
+      // === CARD 3 — "Journey got smoother" ===
+      const card3 = document.getElementById('social-card-3');
+      const c3bg = getLuminance(secondary) > 0.5 ? primary : secondary;
+      const c3text = getReadableText(c3bg);
+      card3.style.background = c3bg;
+      card3.innerHTML = buildCard3HTML(c3bg, accent, tertiary, c3text, copy);
+
+      setTimeout(()=>{ if(window.lucide) lucide.createIcons(); },10);
+    }
+
+    function buildCard1HTML(bg, secondary, accent, ink, textColor, copy) {
+      const accentText = getReadableText(accent);
+      return `
+        <div style="position:relative;padding:20px;height:100%;display:flex;flex-direction:column;justify-content:space-between;min-height:320px;">
+          <!-- Big watermark text -->
+          <div class="big-month" style="color:${textColor};">${copy.month}</div>
+
+          <!-- Top: logo + tag -->
+          <div>
+            <div class="brand-logo" style="color:${textColor};font-size:13px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;border-radius:8px;background:${accent};display:flex;align-items:center;justify-content:center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentText}" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+              </div>
+              <span>kol<span class="x-mark">X</span>o</span>
+            </div>
+            <div class="tag-pill" style="color:${accent};border-color:${accent};background:${accent}22;">${copy.tagline[0]}</div>
+            <div class="headline" style="color:${textColor};margin-top:10px;font-size:22px;">${copy.headline[0]}</div>
+          </div>
+
+          <!-- Middle: person silhouette placeholder -->
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;margin:14px 0;">
+            <div style="width:90px;height:110px;border-radius:14px;background:linear-gradient(160deg,${accent}44,${accent}22);border:1.5px solid ${accent}55;display:flex;align-items:center;justify-content:center;font-size:36px;">👤</div>
+          </div>
+
+          <!-- Bottom: text + url -->
+          <div>
+            <p class="subline" style="color:${textColor};font-size:10px;">${copy.sub[0]}</p>
+            <div class="info-bar" style="background:${accent};color:${accentText};border-radius:8px;margin-top:10px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="${accentText}" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+              ${copy.url}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function buildCard2HTML(bg, dark, light, textColor, copy) {
+      const monthWord = copy.month || 'Month';
+      return `
+        <div style="position:relative;padding:20px;height:100%;display:flex;flex-direction:column;justify-content:space-between;min-height:340px;">
+          <!-- Big watermark -->
+          <div class="big-month" style="color:${textColor};">${monthWord}</div>
+
+          <!-- Top: logo -->
+          <div class="brand-logo" style="color:${textColor};font-size:13px;text-align:center;justify-content:center;">
+            <div style="width:28px;height:28px;border-radius:8px;background:${dark}44;display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${textColor}" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+            </div>
+            <span>kol<span class="x-mark">X</span>o</span>
+          </div>
+
+          <!-- Center big type -->
+          <div style="text-align:center;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+            <div style="font-size:13px;font-weight:600;color:${textColor};opacity:0.75;">Welcome to</div>
+            <div style="font-size:64px;font-weight:900;line-height:0.9;letter-spacing:-3px;color:${textColor};">${monthWord}</div>
+
+            <!-- App mockup placeholder -->
+            <div style="width:100px;height:60px;border-radius:12px;background:${dark}33;border:1.5px solid ${textColor}33;display:flex;align-items:center;justify-content:center;margin-top:10px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${textColor}" stroke-width="1.5" opacity="0.7"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            </div>
+
+            <p class="subline" style="color:${textColor};font-size:9.5px;max-width:160px;text-align:center;margin-top:8px;">${copy.sub[1]}</p>
+          </div>
+
+          <!-- Bottom info bar -->
+          <div class="info-bar" style="background:${dark}55;color:${textColor};border-radius:8px;border:1px solid ${textColor}22;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="${textColor}" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+            ${copy.url}
+          </div>
+        </div>`;
+    }
+
+    function buildCard3HTML(bg, accent, tertiary, textColor, copy) {
+      const accentText = getReadableText(accent);
+      return `
+        <div style="position:relative;padding:20px;height:100%;display:flex;flex-direction:column;justify-content:space-between;min-height:320px;">
+          <div class="big-month" style="color:${textColor};">${copy.month}</div>
+
+          <!-- Top: logo -->
+          <div class="brand-logo" style="color:${textColor};font-size:13px;margin-bottom:14px;">
+            <div style="width:28px;height:28px;border-radius:8px;background:${accent};display:flex;align-items:center;justify-content:center;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${accentText}" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+            </div>
+            <span>kol<span class="x-mark">X</span>o</span>
+          </div>
+
+          <!-- Headline -->
+          <div style="flex:1;">
+            <div class="headline" style="color:${textColor};font-size:22px;">${copy.headline[2]}</div>
+          </div>
+
+          <!-- Middle: two-person placeholder -->
+          <div style="display:flex;align-items:center;justify-content:center;margin:12px 0;gap:8px;">
+            <div style="width:70px;height:85px;border-radius:12px;background:linear-gradient(160deg,${accent}44,${accent}22);border:1.5px solid ${accent}55;display:flex;align-items:center;justify-content:center;font-size:26px;">🤝</div>
+            <div style="width:70px;height:85px;border-radius:12px;background:linear-gradient(160deg,${tertiary}66,${tertiary}33);border:1.5px solid ${accent}33;display:flex;align-items:center;justify-content:center;font-size:26px;">🏠</div>
+          </div>
+
+          <!-- Sub copy -->
+          <p class="subline" style="color:${textColor};font-size:10px;margin-bottom:10px;">${copy.sub[2]}</p>
+
+          <!-- Info bar -->
+          <div class="info-bar" style="background:${accent};color:${accentText};border-radius:8px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="${accentText}" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+            ${copy.url}
+          </div>
+        </div>`;
+    }
+
+    // ============= INTERACTIONS =============
+    function initForm() {
+      document.getElementById('field-purpose').addEventListener('change',(e)=>{ state.purpose=e.target.value; });
+
+      document.querySelectorAll('[data-mood]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const mood=btn.dataset.mood;
+          const idx=state.moods.indexOf(mood);
+          if(idx>=0){ state.moods.splice(idx,1); btn.classList.remove('chip-active'); }
+          else { if(state.moods.length>=3){ showToast('Maksimal 3 mood'); return; } state.moods.push(mood); btn.classList.add('chip-active'); }
+        });
+      });
+      document.querySelector('[data-mood="tegas"]').classList.add('chip-active');
+
+      document.querySelectorAll('.focus-toggle').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          state.focus=btn.dataset.focus;
+          document.querySelectorAll('.focus-toggle').forEach(b=>{ b.classList.remove('bg-white','shadow-sm'); b.classList.add('text-zinc-500'); });
+          btn.classList.add('bg-white','shadow-sm'); btn.classList.remove('text-zinc-500');
+        });
+      });
+
+      document.getElementById('field-audience').addEventListener('change',(e)=>{ state.audience=e.target.value; });
+
+      document.getElementById('generate-btn').addEventListener('click',()=>{
+        if(state.moods.length===0){ showToast('Pilih minimal 1 mood'); return; }
+        state.shuffleIndex=0;
+        generateResult();
+        setTimeout(()=>{ document.getElementById('result-section').scrollIntoView({behavior:'smooth',block:'start'}); },100);
+      });
+
+      document.getElementById('shuffle-btn').addEventListener('click',()=>{
+        state.shuffleIndex++;
+        generateResult();
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{ initForm(); if(window.lucide) lucide.createIcons(); });
+    if(document.readyState!=='loading'){ initForm(); if(window.lucide) lucide.createIcons(); }
+  </script>
+ </body>
+</html>
