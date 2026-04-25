@@ -198,17 +198,49 @@
        </div>
       </div><!-- CENTER: COLOR WHEEL (DOMINANT) -->
       <div class="flex justify-center">
-       <svg id="color-wheel" viewbox="0 0 400 400" class="w-full h-auto max-w-xs"><!-- Color wheel with conic gradient for smooth hue spectrum --> <defs>
-         <filter id="wheel-shadow">
-          <fedropshadow dx="0" dy="3" stddeviation="4" floodopacity="0.12" />
-         </filter>
-         <radialgradient id="center-fade" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="white" stop-opacity="1" />
-          <stop offset="100%" stop-color="white" stop-opacity="0" />
-         </radialgradient>
-        </defs> <!-- Conic gradient wheel (using multiple stops for smooth hue) --> <circle cx="200" cy="200" r="180" fill="none" stroke-width="60" filter="url(#wheel-shadow)" style="stroke: conic-gradient(from 0deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #00FFFF, #0000FF, #8B00FF, #FF0000);" /> <!-- Inner grayscale ring for reference --> <circle cx="200" cy="200" r="120" fill="none" stroke="#f5f5f5" stroke-width="8" opacity="0.6" /> <!-- Center white with fade --> <circle cx="200" cy="200" r="100" fill="white" /> <circle cx="200" cy="200" r="100" fill="url(#center-fade)" /> <!-- Indicators --> <circle id="wheel-indicator-1" cx="200" cy="40" r="9" fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));" /> <circle id="wheel-indicator-2" cx="200" cy="40" r="9" fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));" /> <circle id="wheel-indicator-3" cx="200" cy="40" r="9" fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));" /> <!-- Center dot --> <circle cx="200" cy="200" r="5" fill="var(--ink)" />
-       </svg>
-      </div><!-- RIGHT: COLOR LEGEND -->
+  <svg id="color-wheel" viewBox="0 0 400 400" class="w-full h-auto max-w-xs">
+    
+    <defs>
+      <!-- Inject HTML gradient ke SVG -->
+      <foreignObject x="0" y="0" width="400" height="400">
+        <div xmlns="http://www.w3.org/1999/xhtml"
+             style="
+               width: 100%;
+               height: 100%;
+               border-radius: 50%;
+               background: conic-gradient(
+                 #ff0000, #ff7f00, #ffff00, #00ff00,
+                 #00ffff, #0000ff, #8b00ff, #ff0000
+               );
+             ">
+        </div>
+      </foreignObject>
+
+      <!-- Mask untuk bikin jadi ring -->
+      <mask id="wheel-mask">
+        <rect width="100%" height="100%" fill="white"/>
+        <circle cx="200" cy="200" r="100" fill="black"/>
+      </mask>
+    </defs>
+
+    <!-- Apply mask -->
+    <circle cx="200" cy="200" r="180"
+            fill="url(#gradient)"
+            mask="url(#wheel-mask)" />
+
+    <!-- Inner circle -->
+    <circle cx="200" cy="200" r="100" fill="white"/>
+
+    <!-- Indicators -->
+    <circle id="wheel-indicator-1" cx="200" cy="40" r="9"
+            fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0"/>
+    <circle id="wheel-indicator-2" cx="200" cy="40" r="9"
+            fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0"/>
+    <circle id="wheel-indicator-3" cx="200" cy="40" r="9"
+            fill="white" stroke="#0a0a0a" stroke-width="2" opacity="0"/>
+
+  </svg>
+</div><!-- RIGHT: COLOR LEGEND -->
       <div>
        <p class="text-[11px] tracking-[0.15em] uppercase font-medium mb-4" style="color: var(--muted);">Color Indicators</p>
        <div id="indicator-list" class="space-y-2.5 text-[11px]">
