@@ -1,799 +1,583 @@
 <!doctype html>
-<html lang="en" class="h-full">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Color Decision Engine</title>
-  <script src="/_sdk/element_sdk.js"></script>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-  <style>
-  :root {
-    --ink: #0a0a0a;
-    --paper: #fafaf7;
-    --muted: #6b6b6b;
-    --line: #e8e6e0;
-    --subtle: #f2f0ea;
-  }
-  html, body { height: 100%; }
-  body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    font-feature-settings: "ss01", "cv11";
-    -webkit-font-smoothing: antialiased;
-  }
-  .serif { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
-
-  /* Subtle grain texture */
-  .grain::before {
-    content: "";
-    position: fixed; inset: 0;
-    pointer-events: none;
-    opacity: 0.015;
-    z-index: 1;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
-  /* Option pills */
-  .option {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid var(--line);
-    background: transparent;
-  }
-  .option:hover {
-    border-color: var(--ink);
-  }
-  .option.selected {
-    background: var(--ink);
-    color: var(--paper);
-    border-color: var(--ink);
-  }
-  .option.disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-
-  /* Step number */
-  .step-num {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-  }
-
-  /* Results transitions */
-  .results {
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-    pointer-events: none;
-  }
-  .results.visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-
-  /* Swatch hover */
-  .swatch {
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-  .swatch:hover { transform: translateY(-4px); }
-  .swatch-color {
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Preview */
-  .preview-card {
-    aspect-ratio: 4 / 5;
-    transition: background 1s ease, color 1s ease;
-  }
-  .preview-hook {
-    transition: background 1s ease;
-  }
-  .preview-cta {
-    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Copy toast */
-  .toast {
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all 0.3s ease;
-    pointer-events: none;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Divider line */
-  .rule {
-    height: 1px;
-    background: var(--line);
-  }
-
-  /* Generate button */
-  .generate-btn {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: -0.01em;
-  }
-  .generate-btn:hover:not(:disabled) {
-    background: #1a1a1a;
-    transform: translateY(-1px);
-  }
-  .generate-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  /* Section numbering */
-  .section-index {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-  }
-
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .stagger > * {
-    animation: fadeInUp 0.6s ease forwards;
-    opacity: 0;
-  }
-  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
-  .stagger > *:nth-child(2) { animation-delay: 0.12s; }
-  .stagger > *:nth-child(3) { animation-delay: 0.19s; }
-  .stagger > *:nth-child(4) { animation-delay: 0.26s; }
-  .stagger > *:nth-child(5) { animation-delay: 0.33s; }
-
-  /* Focal dot indicator */
-  .focal-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: currentColor;
-    display: inline-block;
-  }
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mesin Keputusan Warna</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a0a0a;--paper:#fafaf7;--muted:#6b6b6b;--line:#e8e6e0}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px}
+.serif{font-family:'Fraunces',Georgia,serif}
+#wheel-wrap{position:relative;width:300px;height:300px;flex-shrink:0;user-select:none}
+#wheel-canvas{border-radius:50%;display:block;cursor:crosshair;box-shadow: inset 0 0 0 10px white}
+.w-dot{position:absolute;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,.55);transform:translate(-50%,-50%);cursor:grab;z-index:10;transition:box-shadow .15s,transform .15s}
+.w-dot:hover{transform:translate(-50%,-50%) scale(1.3);box-shadow:0 3px 14px rgba(0,0,0,.6)}
+.w-dot.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.35)}
+#harmony-svg{position:absolute;inset:0;pointer-events:none;width:300px;height:300px}
+select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:white;font-size:13px;cursor:pointer;color:var(--ink);transition:border-color .2s;font-family:inherit}
+select:hover{border-color:var(--ink)}
+select:focus{outline:none;border-color:var(--ink)}
+.gen-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 26px;border-radius:99px;font-size:13px;font-weight:500;background:var(--ink);color:var(--paper);border:none;cursor:pointer;transition:all .25s;letter-spacing:.01em;font-family:inherit}
+.gen-btn:hover:not(:disabled){background:#222;transform:translateY(-1px)}
+.gen-btn:disabled{opacity:.3;cursor:not-allowed}
+.results{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;pointer-events:none}
+.results.visible{opacity:1;transform:none;pointer-events:auto}
+.toast{opacity:0;pointer-events:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(6px);padding:9px 18px;border-radius:99px;font-size:11px;letter-spacing:.04em;z-index:100;background:var(--ink);color:var(--paper);white-space:nowrap;transition:all .25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#tint-shade-strip{display:flex;height:16px;border-radius:4px;overflow:hidden;margin-top:10px;width:300px}
+.ts-cell{flex:1;transition:background .4s}
 </style>
-  <style>body { box-sizing: border-box; }</style>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
- </head>
- <body class="grain">
-  <main class="w-full min-h-full">
-   <!-- ============ HEADER ============ -->
-   <header class="w-full border-b" style="border-color: var(--line);">
-    <div class="max-w-6xl mx-auto px-6 md:px-12 py-6 flex items-center justify-between">
-     <div class="flex items-center gap-3">
-      <div class="flex gap-1">
-       <span class="w-2.5 h-2.5 rounded-full" style="background:#0a0a0a"></span> <span class="w-2.5 h-2.5 rounded-full" style="background:#c94a2b"></span> <span class="w-2.5 h-2.5 rounded-full" style="background:#d4a574"></span>
-      </div><span class="text-xs tracking-[0.18em] uppercase font-medium" style="color: var(--muted);">Color Decision Engine</span>
-     </div>
-     <div class="hidden md:flex items-center gap-6 text-xs tracking-wider uppercase" style="color: var(--muted);">
-      <span class="section-index">01 Input</span> <span class="section-index">02 Result</span> <span class="section-index">03 Preview</span>
-     </div>
-    </div>
-   </header><!-- ============ HERO / INTRO ============ -->
-   <section class="max-w-6xl mx-auto px-6 md:px-12 pt-16 md:pt-24 pb-16">
-    <p id="eyebrow-text" class="text-xs tracking-[0.22em] uppercase mb-8" style="color: var(--muted);">A thinking tool for designers</p>
-    <h1 id="main-title" class="serif font-light text-[44px] md:text-[88px] leading-[0.95] tracking-[-0.03em] max-w-4xl">Choose color with <em class="italic font-normal">intention</em>, not instinct.</h1>
-    <p id="main-subtitle" class="mt-8 md:mt-10 text-base md:text-lg max-w-xl leading-relaxed" style="color: var(--muted);">Color is feeling. This tool guides you through purpose, mood, and hierarchy — so every palette carries a reason you can explain.</p>
-   </section><!-- ============ INPUT SECTION ============ -->
-   <section class="max-w-6xl mx-auto px-6 md:px-12 pb-24" aria-labelledby="input-heading">
-    <div class="flex items-baseline gap-4 mb-12">
-     <span class="section-index text-xs tracking-[0.2em] uppercase" style="color: var(--muted);">01</span>
-     <h2 id="input-heading" class="serif text-2xl md:text-3xl font-normal tracking-tight">Tell the tool what you're designing for.</h2>
-    </div><!-- UNIFIED BOX: WHEEL + FIELDS -->
-    <div class="bg-white rounded-lg p-8 md:p-12 shadow-sm" style="border: 1px solid var(--line);">
-     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 items-start"><!-- LEFT: DROPDOWNS (COMPACT) -->
-      <div class="space-y-6"><!-- STEP 1: SITUATION -->
-       <div>
-        <div class="flex items-baseline gap-2 mb-3">
-         <span class="step-num text-xs" style="color: var(--muted);">01</span>
-         <h3 id="step-one-title" class="text-xs font-semibold tracking-wide uppercase">Situation</h3>
-        </div><select id="situation-select" class="w-full px-3 py-2.5 rounded-lg border bg-white text-sm cursor-pointer transition-all hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-0" style="border-color: var(--line); color: var(--ink);"> <option value="">— Choose —</option> <option value="energy">🔥 Energy</option> <option value="calm">🌊 Calm</option> <option value="growth">🌱 Growth</option> <option value="luxury">✨ Luxury</option> <option value="playful">🎨 Playful</option> <option value="urgent">⚡ Urgent</option> </select>
-       </div><!-- STEP 2: HARMONY -->
-       <div>
-        <div class="flex items-baseline gap-2 mb-3">
-         <span class="step-num text-xs" style="color: var(--muted);">02</span>
-         <h3 id="step-two-title" class="text-xs font-semibold tracking-wide uppercase">Harmony</h3>
-        </div><select id="harmony-select" class="w-full px-3 py-2.5 rounded-lg border bg-white text-sm cursor-pointer transition-all hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-0" style="border-color: var(--line); color: var(--ink);"> <option value="">— Choose —</option> <option value="analogous">Analogous</option> <option value="complementary">Complementary</option> <option value="split">Split Comp.</option> <option value="triadic">Triadic</option> <option value="tetradic">Tetradic</option> <option value="square">Square</option> </select>
-       </div>
-      </div><!-- CENTER: COLOR WHEEL (DOMINANT) -->
-      <div class="flex justify-center relative">
-       <!-- COLOR WHEEL WITH CONIC GRADIENT -->
-       <div id="color-wheel" class="w-[280px] h-[280px] rounded-full shadow-sm" style="background: conic-gradient(
-              hsl(0,100%,50%),
-              hsl(45,100%,50%),
-              hsl(60,100%,50%),
-              hsl(120,100%,50%),
-              hsl(180,100%,50%),
-              hsl(240,100%,50%),
-              hsl(300,100%,50%),
-              hsl(360,100%,50%)
-            );">
-       </div><!-- INNER WHITE CIRCLE -->
-       <div class="absolute w-[160px] h-[160px] bg-white rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div><!-- CENTER DOT -->
-       <div class="absolute w-1.5 h-1.5 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" style="background: var(--ink);"></div><!-- INDICATOR DOTS -->
-       <div id="wheel-indicator-1" class="absolute w-3.5 h-3.5 bg-white border-2 rounded-full opacity-0" style="border-color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.35);"></div>
-       <div id="wheel-indicator-2" class="absolute w-3.5 h-3.5 bg-white border-2 rounded-full opacity-0" style="border-color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.35);"></div>
-       <div id="wheel-indicator-3" class="absolute w-3.5 h-3.5 bg-white border-2 rounded-full opacity-0" style="border-color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.35);"></div>
-      </div><!-- OLD SVX CODE REMOVED --><!-- RIGHT: COLOR LEGEND -->
-      <div>
-       <p class="text-[11px] tracking-[0.15em] uppercase font-medium mb-4" style="color: var(--muted);">Color Indicators</p>
-       <div id="indicator-list" class="space-y-2.5 text-[11px]">
-        <div class="flex items-center gap-2">
-         <span class="w-2.5 h-2.5 rounded-full" style="background:#999;"></span> <span style="color: var(--muted);">Select both fields</span>
-        </div>
-       </div>
+</head>
+<body>
+
+<header style="border-bottom:1px solid var(--line)">
+  <div style="max-width:920px;margin:0 auto;padding:18px 32px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;gap:5px">
+        <span style="width:9px;height:9px;border-radius:50%;background:#0a0a0a;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:#c94a2b;display:inline-block"></span>
+        <span style="width:9px;height:9px;border-radius:50%;background:#d4a574;display:inline-block"></span>
       </div>
-     </div>
-    </div><!-- GENERATE -->
-    <div class="mt-16 flex flex-col md:flex-row items-start md:items-center gap-6">
-     <button id="generate-btn" disabled class="generate-btn inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm font-medium tracking-wide" style="background: var(--ink); color: var(--paper);"> <span id="generate-button-text">Generate Color Decision</span> <i data-lucide="arrow-right" class="w-4 h-4"></i> </button>
-     <p id="status-text" class="text-xs tracking-wide" style="color: var(--muted);">Complete all four steps to continue.</p>
+      <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">Mesin Keputusan Warna</span>
     </div>
-   </section><!-- ============ RESULTS ============ -->
-   <section id="results" class="results border-t" style="border-color: var(--line);">
-    <!-- UNIFIED RESULTS SECTION -->
-    <div class="max-w-6xl mx-auto px-6 md:px-12 py-20 md:py-28">
-     <div class="flex items-baseline gap-4 mb-12">
-      <span class="section-index text-xs tracking-[0.2em] uppercase" style="color: var(--muted);">02</span>
-      <h2 class="serif text-2xl md:text-3xl font-normal tracking-tight">Your color decision.</h2>
-     </div><!-- Preview card -->
-     <div class="max-w-2xl mx-auto mb-20">
-      <div id="preview-card" class="preview-card w-full rounded-sm overflow-hidden flex flex-col shadow-[0_1px_0_rgba(0,0,0,0.04)]" style="background:#fff;">
-       <!-- Visual hook 60% (Primary) -->
-       <div id="preview-hook" class="preview-hook relative flex items-center justify-center" style="height:60%;">
-        <div id="hook-inner" class="absolute inset-0 flex items-center justify-center">
-         <!-- abstract SVG injected -->
-        </div>
-       </div><!-- Content 40% (Secondary base) -->
-       <div id="preview-content" class="flex flex-col justify-between p-6 md:p-8" style="height:40%;">
-        <div>
-         <p id="preview-badge" class="text-[10px] tracking-[0.25em] uppercase mb-3 inline-block">Design system</p>
-         <h4 id="preview-headline" class="serif text-[22px] md:text-[28px] leading-[1.05] tracking-[-0.02em] font-normal">Harmony in balance.</h4>
-         <p id="preview-sub" class="text-[11px] md:text-xs mt-2 leading-relaxed">60 / 30 / 10 composition.</p>
-        </div>
-        <div class="flex items-center justify-between mt-4">
-         <button id="preview-cta" class="preview-cta text-[11px] tracking-[0.15em] uppercase px-4 py-2.5 rounded-full font-medium"> View → </button> <span id="preview-meta" class="text-[10px] tracking-[0.2em] uppercase">Palette</span>
-        </div>
-       </div>
-      </div>
-      <p class="mt-4 text-xs tracking-wider uppercase text-center" style="color: var(--muted);">4:5 · abstract composition</p>
-     </div><!-- Palette bar & details -->
-     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-      <!-- Left: Composite bar -->
-      <div class="md:col-span-2">
-       <div id="palette-bars" class="stagger">
-        <!-- Color strip injected -->
-       </div>
-       <div class="mt-6 flex flex-col md:flex-row items-start md:items-center gap-3">
-        <p class="text-xs tracking-wider uppercase" style="color: var(--muted);">Click color to copy hex</p>
-       </div>
-      </div><!-- Right: Harmony explanation -->
-      <div>
-       <p class="text-xs tracking-[0.2em] uppercase mb-4" style="color: var(--muted);">Why this harmony</p>
-       <p id="reason-harmony" class="text-sm md:text-base leading-relaxed">—</p>
-       <div class="pt-6 border-t mt-6" style="border-color: var(--line);">
-        <button id="regenerate-btn" class="text-sm font-medium inline-flex items-center gap-2 hover:opacity-60 transition-opacity"> <i data-lucide="refresh-cw" class="w-4 h-4"></i> Generate another </button>
-       </div>
-      </div>
-     </div>
+    <div style="display:flex;gap:20px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
+      <span>01 Input</span><span>02 Hasil</span>
     </div>
-   </section><!-- FOOTER -->
-   <footer class="w-full border-t mt-8" style="border-color: var(--line);">
-    <div class="max-w-6xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-     <p id="footer-text" class="text-xs tracking-wide" style="color: var(--muted);">Color is feeling. Design with reason.</p>
-     <p class="text-xs tracking-[0.2em] uppercase" style="color: var(--muted);">Color Decision Engine</p>
-    </div>
-   </footer>
-  </main><!-- Toast -->
-  <div id="toast" class="toast fixed bottom-8 left-1/2 -translate-x-1/2 px-5 py-3 rounded-full text-xs tracking-wide z-50" style="background: var(--ink); color: var(--paper);">
-   Copied to clipboard
   </div>
-  <script>
-/* =========================================================
-   COLOR WHEEL POSITIONING HELPER
-   Converts hue (0-360°) to CSS left/top position on wheel
-   ========================================================= */
-function getWheelIndicatorPosition(hue) {
-  // wheel container is 280px × 280px
-  // radius from center to indicator circle = 140px (280/2 - 0, positioned on outer ring)
-  const wheelSize = 140; // half of 280px container
-  const angle = (hue - 90) * (Math.PI / 180); // 0° at top, clockwise
-  const radius = 110; // distance from center (between inner white circle and outer edge)
-  
-  // Calculate absolute pixel position from container top-left
-  const x = wheelSize + radius * Math.cos(angle);
-  const y = wheelSize + radius * Math.sin(angle);
-  
-  return { x, y };
+</header>
+
+<section style="max-width:920px;margin:0 auto;padding:52px 32px 28px">
+  <p style="font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:20px">Alat berpikir untuk desainer</p>
+  <h1 class="serif" style="font-weight:300;font-size:clamp(34px,5.5vw,68px);line-height:.95;letter-spacing:-.03em;margin-bottom:20px">Pilih warna dengan <em style="font-style:italic;font-weight:400">niat</em>, bukan naluri.</h1>
+  <p style="font-size:15px;color:var(--muted);max-width:460px;line-height:1.75">Seret titik di roda warna untuk menggeser palet. Harmoni mengunci hubungan — kamu yang menentukan suasananya.</p>
+</section>
+
+<section style="max-width:920px;margin:0 auto;padding:0 32px 64px">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:28px">
+    <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">01</span>
+    <h2 class="serif" style="font-size:21px;font-weight:400;letter-spacing:-.01em">Ceritakan untuk apa kamu mendesain.</h2>
+  </div>
+
+  <div style="background:white;border-radius:14px;padding:36px;border:1px solid var(--line)">
+    <div style="display:grid;grid-template-columns:200px auto 1fr;gap:32px;align-items:start">
+
+      <!-- KIRI -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div>
+          <div style="display:flex;gap:7px;align-items:baseline;margin-bottom:9px">
+            <span style="font-size:10px;color:var(--muted)">01</span>
+            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Situasi</span>
+          </div>
+          <select id="situation-select">
+            <option value="">— Pilih —</option>
+            <option value="energy">🔥 Energi</option>
+            <option value="calm">🌊 Tenang</option>
+            <option value="growth">🌱 Tumbuh</option>
+            <option value="luxury">✨ Mewah</option>
+            <option value="playful">🎨 Ceria</option>
+            <option value="urgent">⚡ Darurat</option>
+          </select>
+        </div>
+        <div>
+          <div style="display:flex;gap:7px;align-items:baseline;margin-bottom:9px">
+            <span style="font-size:10px;color:var(--muted)">02</span>
+            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Harmoni</span>
+          </div>
+          <select id="harmony-select">
+            <option value="">— Pilih —</option>
+            <option value="monochromatic">Monokromatik</option>
+            <option value="analogous">Analogus</option>
+            <option value="complementary">Komplementer</option>
+            <option value="split">Split Komplementer</option>
+            <option value="triadic">Triadik</option>
+          </select>
+        </div>
+        <div>
+          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Indikator warna</p>
+          <div id="indicator-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- TENGAH: roda -->
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div id="wheel-wrap">
+          <canvas id="wheel-canvas" width="300" height="300"></canvas>
+          <svg id="harmony-svg"></svg>
+        </div>
+        <div id="tint-shade-strip"></div>
+        <div style="display:flex;justify-content:space-between;width:300px;margin-top:5px">
+          <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">← Shade gelap</span>
+          <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tint terang →</span>
+        </div>
+        <p style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px">seret titik untuk ubah hue</p>
+      </div>
+
+      <!-- KANAN: readout -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div>
+          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Nilai hue</p>
+          <div id="hue-readout" style="display:flex;flex-direction:column;gap:8px;font-family:monospace;font-size:12px"><span style="color:var(--muted)">—</span></div>
+        </div>
+        <div id="hex-readout"></div>
+        <div>
+          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Keterangan cincin</p>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted)">
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(red,yellow,green,cyan,blue,magenta,red);display:inline-block;flex-shrink:0"></span>
+              Luar · Hue murni
+            </div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(hsl(0,55%,74%),hsl(120,55%,74%),hsl(240,55%,74%),hsl(0,55%,74%));display:inline-block;flex-shrink:0"></span>
+              Tengah · Tint (lebih terang)
+            </div>
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(hsl(0,75%,26%),hsl(120,75%,26%),hsl(240,75%,26%),hsl(0,75%,26%));display:inline-block;flex-shrink:0"></span>
+              Dalam · Shade (lebih gelap)
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="margin-top:40px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <button id="generate-btn" disabled class="gen-btn">
+      <span>Buat Keputusan Warna</span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+    <p id="status-text" style="font-size:12px;color:var(--muted)">Lengkapi kedua pilihan untuk melanjutkan.</p>
+  </div>
+</section>
+
+<!-- HASIL -->
+<section id="results" class="results" style="border-top:1px solid var(--line)">
+  <div style="max-width:920px;margin:0 auto;padding:60px 32px">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:36px">
+      <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">02</span>
+      <h2 class="serif" style="font-size:21px;font-weight:400">Keputusan warna kamu.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start">
+      <div>
+        <div id="preview-card" style="border-radius:6px;overflow:hidden;aspect-ratio:4/5;display:flex;flex-direction:column">
+          <div id="preview-hook" style="flex:0 0 60%;position:relative">
+            <div id="hook-inner" style="position:absolute;inset:0"></div>
+          </div>
+          <div id="preview-content" style="flex:0 0 40%;padding:22px;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <p style="font-size:9px;letter-spacing:.25em;text-transform:uppercase;margin-bottom:9px">Sistem desain</p>
+              <h4 id="preview-headline" class="serif" style="font-size:21px;line-height:1.05;letter-spacing:-.02em;font-weight:400;margin-bottom:5px">Harmoni dalam keseimbangan.</h4>
+              <p id="preview-sub" style="font-size:11px;line-height:1.6">Komposisi 60 / 30 / 10.</p>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+              <button id="preview-cta" style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:7px 14px;border-radius:99px;border:none;font-weight:500;cursor:pointer;font-family:inherit">Lihat →</button>
+              <span style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Palet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div id="palette-bars" style="margin-bottom:20px"></div>
+        <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:20px">Klik warna untuk salin kode hex</p>
+        <div style="border-top:1px solid var(--line);padding-top:20px">
+          <p style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Mengapa harmoni ini</p>
+          <p id="reason-harmony" style="font-size:14px;line-height:1.75">—</p>
+          <div style="margin-top:20px">
+            <button id="regenerate-btn" style="font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px;font-family:inherit">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Buat ulang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid var(--line);margin-top:24px">
+  <div style="max-width:920px;margin:0 auto;padding:28px 32px;display:flex;justify-content:space-between;align-items:center">
+    <p style="font-size:12px;color:var(--muted)">Warna adalah perasaan. Desain dengan alasan.</p>
+    <p style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">Mesin Keputusan Warna</p>
+  </div>
+</footer>
+
+<div id="toast" class="toast">Disalin</div>
+
+<script>
+const WS=300,CX=150,CY=150;
+const R_OUT=148,R_MID=108,R_INN=68,R_CENTER=30;
+
+/* ── GAMBAR CANVAS 3 CINCIN ── */
+function drawWheel(){
+  const canvas = document.getElementById('wheel-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const size = 300;
+  const radius = 150;
+
+  const image = ctx.createImageData(size, size);
+  const data = image.data;
+
+  for(let y=0; y<size; y++){
+    for(let x=0; x<size; x++){
+      const dx = x - radius;
+      const dy = y - radius;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if(dist > radius) continue;
+
+      // HUE (dari angle)
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      angle = (angle + 360) % 360;
+
+      // SATURATION (dari jarak ke tengah)
+      const sat = dist / radius;
+
+      // VALUE (brightness tetap 1)
+      const val = 1;
+
+      const rgb = hsvToRgb(angle, sat, val);
+
+      const i = (y * size + x) * 4;
+      data[i] = rgb.r;
+      data[i+1] = rgb.g;
+      data[i+2] = rgb.b;
+      data[i+3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+} 
+
+/* ── KONVERSI ── */
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360;s=Math.max(0,Math.min(100,s))/100;l=Math.max(0,Math.min(100,l))/100;
+  const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}
+  else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+  const t=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
+  return'#'+t(r)+t(g)+t(b);
+}
+function hueFromXY(px,py){
+  const a=Math.atan2(py-CY,px-CX)*(180/Math.PI)+90;
+  return((a%360)+360)%360;
+}
+function ringFromDist(d){
+  if(d>R_MID+1)return'outer';
+  if(d>R_INN+1)return'mid';
+  return'inner';
+}
+function posFromHueRing(hue,ring){
+  const a=(hue-90)*Math.PI/180;
+  const r=ring==='outer'?(R_OUT+R_MID)/2:ring==='mid'?(R_MID+R_INN)/2:(R_INN+R_CENTER)/2;
+  return{x:CX+r*Math.cos(a),y:CY+r*Math.sin(a)};
+}
+function hexFromHueRing(hue,ring){
+  if(ring==='outer')return hslToHex(hue,100,50);
+  if(ring==='mid')  return hslToHex(hue,55,74);
+  return                    hslToHex(hue,75,26);
+}
+function hsvToRgb(h, s, v){
+  let c = v * s;
+  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  let m = v - c;
+
+  let r=0,g=0,b=0;
+
+  if(h < 60){ r=c; g=x; }
+  else if(h < 120){ r=x; g=c; }
+  else if(h < 180){ g=c; b=x; }
+  else if(h < 240){ g=x; b=c; }
+  else if(h < 300){ r=x; b=c; }
+  else { r=c; b=x; }
+
+  return {
+    r: Math.round((r+m)*255),
+    g: Math.round((g+m)*255),
+    b: Math.round((b+m)*255)
+  };
+}
+/* ── DATA ── */
+const SITUASI_HUE={energy:{hue:0},calm:{hue:200},growth:{hue:120},luxury:{hue:290},playful:{hue:40},urgent:{hue:15}};
+const HARMONY_OFFSETS={monochromatic:[0,0,0],analogous:[0,30,60],complementary:[0,180,90],split:[0,150,210],triadic:[0,120,240]};
+const HARMONY_RINGS={monochromatic:['outer','mid','inner'],analogous:['outer','outer','outer'],complementary:['outer','outer','mid'],split:['outer','outer','outer'],triadic:['outer','outer','outer']};
+const PENJELASAN={
+  monochromatic:"Satu hue, tiga variasi kecerahan — outer (hue murni), mid (tint lebih terang), inner (shade lebih gelap). Kohesif dan elegan, ideal untuk brand yang ingin tampil konsisten.",
+  analogous:"Tiga warna berdekatan di roda warna. Menciptakan keselarasan dan ketenangan — aman, nyaman, dan natural.",
+  complementary:"Warna primer + lawannya + warna jembatan (tint). Kontras tinggi dan dinamis — menarik perhatian dengan kuat.",
+  split:"Primer + dua warna yang mengapit komplemennya. Ketegangan yang seimbang — berani tapi tidak berlebihan.",
+  triadic:"Tiga warna berjarak 120° satu sama lain. Harmoni maksimal dengan keceriaan — playful, seimbang, dan mudah diingat."
+};
+
+/* ── STATE ── */
+const state={situation:null,harmony:null,primaryHue:0,palette:null};
+
+/* ── DOTS ── */
+const dotEls=[];
+function makeDots(){
+  for(let i=0;i<3;i++){
+    const d=document.createElement('div');
+    d.className='w-dot';
+    d.style.cssText=`display:none;position:absolute;width:${16-i*2}px;height:${16-i*2}px`;
+    document.getElementById('wheel-wrap').appendChild(d);
+    dotEls.push(d);
+  }
+}
+function placeDot(i,hue,ring){
+  const d=dotEls[i];if(!d)return;
+  const pos=posFromHueRing(hue,ring);
+  d.style.left=pos.x+'px';d.style.top=pos.y+'px';
+  d.style.background=hexFromHueRing(hue,ring);
+  d.style.display='block';
+}
+function hideDots(){dotEls.forEach(d=>d.style.display='none')}
+
+/* ── GARIS HARMONI ── */
+function drawLines(hues,rings){
+  const svg=document.getElementById('harmony-svg');
+  if(!hues||hues.length<2){svg.innerHTML='';return}
+  let h='';
+  for(let i=0;i<hues.length;i++){
+    const a=posFromHueRing(hues[i],rings[i]);
+    for(let j=i+1;j<hues.length;j++){
+      const b=posFromHueRing(hues[j],rings[j]);
+      h+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(10,10,10,0.22)" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    }
+  }
+  svg.innerHTML=h;
 }
 
-function updateWheelIndicators() {
-  const indicators = [
-    document.getElementById('wheel-indicator-1'),
-    document.getElementById('wheel-indicator-2'),
-    document.getElementById('wheel-indicator-3')
+/* ── STRIP TINT/SHADE ── */
+function updateStrip(hue){
+  const strip=document.getElementById('tint-shade-strip');
+  let cells='';
+  // 10 sel: 0-2 shade gelap, 3-4 pure hue, 5-9 tint terang
+  const vals=[
+    [hue,80,15],[hue,78,22],[hue,75,30],[hue,90,40],
+    [hue,100,50],[hue,100,50],
+    [hue,65,62],[hue,55,72],[hue,45,80],[hue,35,88]
   ];
-
-  const list = document.getElementById('indicator-list');
-
-  // Reset semua
-  indicators.forEach(ind => {
-    ind.style.opacity = '0';
-    ind.style.transform = 'translate(-50%, -50%)'; // penting biar center
+  vals.forEach(([h,s,l])=>{
+    const hex=hslToHex(h,s,l);
+    cells+=`<div class="ts-cell" style="background:${hex}" title="${hex}"></div>`;
   });
+  strip.innerHTML=cells;
+}
 
-  if (!state.situation) {
-    list.innerHTML = `
-      <div class="text-[11px] flex items-center gap-2">
-        <span class="w-3 h-3 rounded-full" style="background:#999;"></span>
-        <span style="color: var(--muted);">Awaiting selection</span>
-      </div>`;
+/* ── LEGENDA & READOUT ── */
+const RING_LABEL={outer:'Hue murni',mid:'Tint',inner:'Shade'};
+
+function updateLegend(hues,hexes,rings){
+  const isMono=state.harmony==='monochromatic';
+  const labels=isMono?['Gelap (60%)','Sedang (30%)','Terang (10%)']:['Primer (60%)','Sekunder (30%)','Aksen (10%)'];
+  document.getElementById('indicator-list').innerHTML=hues.map((h,i)=>`
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${hexes[i]};flex-shrink:0;border:1px solid rgba(0,0,0,.1);display:inline-block;margin-top:2px"></span>
+      <span style="color:var(--muted);font-size:11px;line-height:1.4">${labels[i]}<br>
+        <span style="font-size:10px;opacity:.75">${RING_LABEL[rings[i]]} · ${Math.round(h)}°</span>
+      </span>
+    </div>`).join('');
+  document.getElementById('hue-readout').innerHTML=hues.map((h,i)=>`
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="width:8px;height:8px;border-radius:50%;background:${hexes[i]};flex-shrink:0;border:1px solid rgba(0,0,0,.08);display:inline-block"></span>
+      <span style="color:var(--muted)">${labels[i].split(' ')[0]}</span>
+      <span style="font-weight:600;color:var(--ink)">${Math.round(h)}°</span>
+    </div>`).join('');
+  document.getElementById('hex-readout').innerHTML=`
+    <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Kode HEX</p>
+    ${hexes.map((hex,i)=>`
+    <div style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:6px" onclick="copyHex('${hex.toUpperCase()}')">
+      <span style="width:9px;height:9px;border-radius:2px;background:${hex};flex-shrink:0;display:inline-block;border:1px solid rgba(0,0,0,.08)"></span>
+      <span style="font-size:11px;font-family:monospace;color:var(--ink)">${hex.toUpperCase()}</span>
+    </div>`).join('')}`;
+}
+
+function showSingleIndicator(hue){
+  const hex=hexFromHueRing(hue,'outer');
+  document.getElementById('indicator-list').innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${hex};flex-shrink:0;border:1px solid rgba(0,0,0,.1);display:inline-block;margin-top:2px"></span>
+      <span style="color:var(--muted);font-size:11px;line-height:1.4">Primer<br>
+        <span style="font-size:10px;opacity:.75">Hue murni · ${Math.round(hue)}°</span>
+      </span>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4">Pilih harmoni untuk melihat semua warna →</div>`;
+  document.getElementById('hue-readout').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="width:8px;height:8px;border-radius:50%;background:${hex};flex-shrink:0;display:inline-block"></span>
+      <span style="color:var(--muted)">Primer</span>
+      <span style="font-weight:600;color:var(--ink)">${Math.round(hue)}°</span>
+    </div>`;
+  document.getElementById('hex-readout').innerHTML=`
+    <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Kode HEX</p>
+    <div style="display:flex;align-items:center;gap:7px;cursor:pointer" onclick="copyHex('${hex.toUpperCase()}')">
+      <span style="width:9px;height:9px;border-radius:2px;background:${hex};display:inline-block;border:1px solid rgba(0,0,0,.08)"></span>
+      <span style="font-size:11px;font-family:monospace;color:var(--ink)">${hex.toUpperCase()}</span>
+    </div>`;
+}
+
+function resetAll(){
+  hideDots();
+  document.getElementById('harmony-svg').innerHTML='';
+  document.getElementById('indicator-list').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px">
+      <span style="width:10px;height:10px;border-radius:50%;background:#ccc;display:inline-block"></span>
+      Pilih situasi terlebih dahulu
+    </div>`;
+  document.getElementById('hue-readout').innerHTML='<span style="color:var(--muted)">—</span>';
+  document.getElementById('hex-readout').innerHTML='';
+}
+
+/* ── UPDATE RODA ── */
+function updateWheel(){
+  const hue=state.primaryHue;
+  updateStrip(hue);
+  if(!state.situation){resetAll();return}
+  if(!state.harmony){
+    hideDots();
+    document.getElementById('harmony-svg').innerHTML='';
+    placeDot(0,hue,'outer');
+    showSingleIndicator(hue);
     return;
   }
-
-  const baseData = SITUATION_BASE_HUES[state.situation];
-  const baseHue = baseData.hue;
-
-  // 👉 FUNCTION POSITION
-  function place(el, hue) {
-    const pos = getWheelIndicatorPosition(hue);
-    el.style.left = pos.x + 'px';
-    el.style.top  = pos.y + 'px';
-    el.style.opacity = '1';
-  }
-
-  // PRIMARY
-  place(indicators[0], baseHue);
-
-  let colors = [
-    { hue: baseHue, label: 'Primary (60%)', color: hslToHex(baseHue, 65, 45) }
-  ];
-
-  if (state.harmony) {
-    const hues = generateHarmony(baseHue, state.harmony);
-
-    // SECONDARY
-    place(indicators[1], hues[1]);
-
-    // ACCENT
-    place(indicators[2], hues[2]);
-
-    colors = [
-      { hue: baseHue, label: 'Primary (60%)', color: hslToHex(baseHue, 65, 45) },
-      { hue: hues[1], label: 'Secondary (30%)', color: hslToHex(hues[1], 50, 60) },
-      { hue: hues[2], label: 'Accent (10%)', color: hslToHex(hues[2], 85, 55) }
-    ];
-  }
-
-  // Update legend kanan
-  list.innerHTML = colors.map(c => `
-    <div class="text-[11px] flex items-center gap-2">
-      <span class="w-3 h-3 rounded-full" style="background:${c.color};"></span>
-      <span style="color: var(--muted);">${c.label} · ${c.hue}°</span>
-    </div>
-  `).join('');
-}
-/* =========================================================
-   CONFIG / DEFAULTS (Element SDK)
-   ========================================================= */
-const defaultConfig = {
-  eyebrow_text: "A thinking tool for designers",
-  main_title: "Choose color with intention, not instinct.",
-  main_subtitle: "Select a situation and harmony rule — we'll generate 3 colors in perfect relationship with a 60/30/10 composition.",
-  step_one_title: "Situation",
-  step_two_title: "Harmony",
-  generate_button_text: "Generate Color Decision",
-  footer_text: "Color is feeling. Design with reason."
-};
-
-/* =========================================================
-   COLOR PSYCHOLOGY: Base hues by situation
-   Each situation maps to a psychological primary hue
-   ========================================================= */
-const SITUATION_BASE_HUES = {
-  energy: { hue: 0, label: "Energy", desc: "Red tones — action, boldness, power" },
-  calm: { hue: 200, label: "Calm", desc: "Blue tones — trust, peace, stability" },
-  growth: { hue: 120, label: "Growth", desc: "Green tones — fresh, natural, optimistic" },
-  luxury: { hue: 290, label: "Luxury", desc: "Purple tones — refined, exclusive, contemplative" },
-  playful: { hue: 40, label: "Playful", desc: "Yellow/Orange tones — joy, energy, warmth" },
-  urgent: { hue: 10, label: "Urgent", desc: "Red-orange tones — alert, attention, urgency" }
-};
-
-/* =========================================================
-   COLOR HARMONY RULES
-   Generate 3 colors based on base hue + harmony relationship
-   ========================================================= */
-function generateHarmony(baseHue, harmonyType) {
-  let hues = [];
-
-  switch(harmonyType) {
-    case 'analogous':
-      // 3 colors 30° apart
-      hues = [baseHue, (baseHue + 30) % 360, (baseHue + 60) % 360];
-      break;
-    case 'complementary':
-      // Primary + complement + modified primary
-      hues = [baseHue, (baseHue + 180) % 360, (baseHue + 90) % 360];
-      break;
-    case 'split':
-      // Primary + two colors on opposite side
-      hues = [baseHue, (baseHue + 150) % 360, (baseHue + 210) % 360];
-      break;
-    case 'triadic':
-      // 3 colors 120° apart (equilateral)
-      hues = [baseHue, (baseHue + 120) % 360, (baseHue + 240) % 360];
-      break;
-    case 'tetradic':
-      // 4 colors 90° apart, we pick 3
-      hues = [baseHue, (baseHue + 90) % 360, (baseHue + 180) % 360];
-      break;
-    case 'square':
-      // Like tetradic, 90° apart
-      hues = [baseHue, (baseHue + 90) % 360, (baseHue + 180) % 360];
-      break;
-    default:
-      hues = [baseHue, (baseHue + 120) % 360, (baseHue + 240) % 360];
-  }
-
-  return hues;
+  const offsets=HARMONY_OFFSETS[state.harmony];
+  const rings=HARMONY_RINGS[state.harmony];
+  const hues=offsets.map(o=>((hue+o)%360+360)%360);
+  const hexes=hues.map((h,i)=>hexFromHueRing(h,rings[i]));
+  hues.forEach((h,i)=>placeDot(i,h,rings[i]));
+  state.harmony==='monochromatic'?document.getElementById('harmony-svg').innerHTML='':drawLines(hues,rings);
+  updateLegend(hues,hexes,rings);
 }
 
-/* =========================================================
-   HSL → HEX conversion
-   ========================================================= */
-function hslToHex(h, s, l) {
-  // Normalize HSL to 0-1
-  h = h % 360; s = Math.max(0, Math.min(100, s)); l = Math.max(0, Math.min(100, l));
-  s /= 100; l /= 100;
-
-  const c = (1 - Math.abs(2*l - 1)) * s;
-  const x = c * (1 - Math.abs((h/60) % 2 - 1));
-  const m = l - c/2;
-  let [r, g, b] = [0, 0, 0];
-
-  if (h < 60) [r, g, b] = [c, x, 0];
-  else if (h < 120) [r, g, b] = [x, c, 0];
-  else if (h < 180) [r, g, b] = [0, c, x];
-  else if (h < 240) [r, g, b] = [0, x, c];
-  else if (h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-
-  const toHex = v => Math.round((v+m)*255).toString(16).padStart(2, '0');
-  return '#' + toHex(r) + toHex(g) + toHex(b);
+/* ── GENERATE PALET ── */
+function generatePalette(){
+  const hue=state.primaryHue;
+  const offsets=HARMONY_OFFSETS[state.harmony];
+  const rings=HARMONY_RINGS[state.harmony];
+  const hues=offsets.map(o=>((hue+o)%360+360)%360);
+  return{
+    primary:hexFromHueRing(hues[0],rings[0]),
+    secondary:hexFromHueRing(hues[1],rings[1]),
+    accent:hexFromHueRing(hues[2],rings[2]),
+    hues,rings,mono:state.harmony==='monochromatic'
+  };
 }
 
-/* =========================================================
-   Generate 3-color palette with 60/30/10 weighting
-   ========================================================= */
-function generateColorPalette(situation, harmony) {
-  const baseData = SITUATION_BASE_HUES[situation];
-  const hues = generateHarmony(baseData.hue, harmony);
-
-  // Create colors at different saturations/lightness for visual hierarchy
-  // Primary (60%): saturated, medium lightness
-  // Secondary (30%): medium saturation, slightly lighter
-  // Accent (10%): highly saturated, more distinct
-
-  const primary = hslToHex(hues[0], 65, 45);    // Rich, saturated
-  const secondary = hslToHex(hues[1], 50, 60);  // Softer, lighter
-  const accent = hslToHex(hues[2], 85, 55);     // Bold, saturated
-
-  return { primary, secondary, accent, harmonyType: harmony, situation };
-}
-
-/* =========================================================
-   STATE
-   ========================================================= */
-const state = {
-  situation: null,
-  harmony: null,
-  palette: null,
-  colorOrder: ['primary', 'secondary', 'accent'] // Tracks current shuffle
-};
-
-/* =========================================================
-   DROPDOWN INITIALIZATION
-   ========================================================= */
-function initDropdowns() {
-  const situationSelect = document.getElementById('situation-select');
-  const harmonySelect = document.getElementById('harmony-select');
-
-  if (situationSelect) {
-    situationSelect.addEventListener('change', (e) => {
-      state.situation = e.target.value || null;
-      updateGenerateAvailability();
-    });
-  }
-
-  if (harmonySelect) {
-    harmonySelect.addEventListener('change', (e) => {
-      state.harmony = e.target.value || null;
-      updateGenerateAvailability();
-    });
-  }
-}
-
-function updateGenerateAvailability() {
-  const ready = state.situation && state.harmony;
-  const btn = document.getElementById('generate-btn');
-  const status = document.getElementById('status-text');
-  btn.disabled = !ready;
-  updateWheelIndicators();
-  if (ready) {
-    status.textContent = "Ready — generate your color palette.";
-  } else {
-    const missing = [];
-    if (!state.situation) missing.push("Situation");
-    if (!state.harmony) missing.push("Harmony");
-    status.textContent = `Still needed: ${missing.join(" · ")}`;
-  }
-}
-
-/* =========================================================
-   GENERATE
-   ========================================================= */
-function generate() {
-  state.palette = generateColorPalette(state.situation, state.harmony);
-  renderResults();
-}
-
-/* =========================================================
-   RENDER PALETTE (SINGLE COMPOSITE BAR)
-   ========================================================= */
-function renderPalette() {
-  const barsContainer = document.getElementById('palette-bars');
-  barsContainer.innerHTML = '';
-
-  const p = state.palette;
-  
-  // Create composite bar with 60/30/10 ratio
-  const barContainer = document.createElement('div');
-  barContainer.className = "space-y-4";
-  
-  // Color strip
-  const stripEl = document.createElement('div');
-  stripEl.className = "w-full h-20 rounded-sm overflow-hidden flex shadow-sm";
-  stripEl.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-  stripEl.innerHTML = `
-    <div style="background:${p.primary}; width: 60%; transition: all 0.8s ease;" title="60% Primary"></div>
-    <div style="background:${p.secondary}; width: 30%; transition: all 0.8s ease;" title="30% Secondary"></div>
-    <div style="background:${p.accent}; width: 10%; transition: all 0.8s ease;" title="10% Accent"></div>
-  `;
-  barContainer.appendChild(stripEl);
-
-  // Color details below
-  const detailsEl = document.createElement('div');
-  detailsEl.className = "grid grid-cols-3 gap-4";
-  
-  const roles = [
-    { key: 'primary', label: 'Primary', percentage: 60, desc: 'Background' },
-    { key: 'secondary', label: 'Secondary', percentage: 30, desc: 'Surfaces' },
-    { key: 'accent', label: 'Accent', percentage: 10, desc: 'Action' }
-  ];
-
-  roles.forEach(r => {
-    const hex = state.palette[r.key].toUpperCase();
-    const item = document.createElement('button');
-    item.className = "text-left group transition-opacity hover:opacity-75 cursor-pointer";
-    item.setAttribute('aria-label', `Copy ${r.label} color ${hex}`);
-    item.innerHTML = `
-      <p class="text-[10px] tracking-[0.18em] uppercase font-medium mb-1">${r.percentage}%</p>
-      <p class="text-xs tracking-wider font-mono mb-2" style="color: var(--muted);">${hex}</p>
-      <p class="text-[10px] leading-snug" style="color: var(--muted);">${r.label}</p>
-    `;
-    item.addEventListener('click', () => copyHex(hex));
-    detailsEl.appendChild(item);
+/* ── DRAG ── */
+let activeDot=null;
+function initDrag(){
+  dotEls.forEach((dot,idx)=>{
+    const s=e=>{e.preventDefault();activeDot=idx;dot.classList.add('dragging')};
+    dot.addEventListener('mousedown',s);
+    dot.addEventListener('touchstart',s,{passive:false});
   });
-
-  barContainer.appendChild(detailsEl);
-  barsContainer.appendChild(barContainer);
-}
-
-/* =========================================================
-   RENDER HARMONY EXPLANATION
-   ========================================================= */
-function renderHarmonyExplanation() {
-  const explanations = {
-    analogous: "Three colors sitting side-by-side on the color wheel. Creates harmony and cohesion — safe, comfortable, elegant.",
-    complementary: "Primary color + its opposite + a bridge color. High contrast, dynamic, energetic — commands attention.",
-    split: "Primary + two colors opposite its complement. Balanced tension — bold but not jarring.",
-    triadic: "Three colors evenly spaced 120° apart. Maximum harmony with vibrancy — playful, balanced, memorable.",
-    tetradic: "Four colors in a balanced rectangle. Rich, complex — use 60/30/10 to avoid chaos.",
-    square: "Four colors evenly spaced 90° apart. Vibrant, balanced, sophisticated when managed well."
+  const move=e=>{
+    if(activeDot===null)return;
+    e.preventDefault();
+    const wrap=document.getElementById('wheel-wrap');
+    const rect=wrap.getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    const x=src.clientX-rect.left,y=src.clientY-rect.top;
+    const dx=x-CX,dy=y-CY,dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<12)return;
+    const draggedHue=hueFromXY(x,y);
+    const offsets=HARMONY_OFFSETS[state.harmony]||[0,120,240];
+    state.primaryHue=((draggedHue-offsets[activeDot])%360+360)%360;
+    updateWheel();
+    if(state.palette){state.palette=generatePalette();renderResults(false)}
   };
-
-  const reasonEl = document.getElementById('reason-harmony');
-  if (reasonEl) {
-    reasonEl.textContent = explanations[state.palette.harmonyType] || "";
-  }
+  document.addEventListener('mousemove',move,{passive:false});
+  document.addEventListener('touchmove',move,{passive:false});
+  const end=()=>{if(activeDot!==null){dotEls[activeDot].classList.remove('dragging');activeDot=null}};
+  document.addEventListener('mouseup',end);
+  document.addEventListener('touchend',end);
 }
 
-/* =========================================================
-   RENDER ABSTRACT PREVIEW
-   ========================================================= */
-function renderPreview() {
-  const p = state.palette;
-  const card = document.getElementById('preview-card');
-  const hook = document.getElementById('preview-hook');
-  const hookInner = document.getElementById('hook-inner');
-
-  // 60% primary section with abstract composition
-  hook.style.background = p.primary;
-  hookInner.innerHTML = `
-    <svg viewBox="0 0 400 480" class="w-full h-full" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <radialGradient id="grad1" cx="20%" cy="30%" r="80%">
-          <stop offset="0%" stop-color="${p.secondary}" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="${p.primary}" stop-opacity="0.2"/>
-        </radialGradient>
-        <radialGradient id="grad2" cx="70%" cy="70%" r="60%">
-          <stop offset="0%" stop-color="${p.accent}" stop-opacity="0.6"/>
-          <stop offset="100%" stop-color="${p.primary}" stop-opacity="0"/>
-        </radialGradient>
-        <filter id="blur">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
-        </filter>
-      </defs>
-      <!-- Base shapes -->
-      <rect width="400" height="480" fill="${p.primary}"/>
-      
-      <!-- Large flowing shapes -->
-      <ellipse cx="100" cy="120" rx="180" ry="140" fill="url(#grad1)"/>
-      <circle cx="350" cy="380" r="120" fill="url(#grad2)"/>
-      
-      <!-- Abstract geometric overlays -->
-      <rect x="20" y="40" width="160" height="120" fill="${p.secondary}" opacity="0.35" rx="20"/>
-      <circle cx="280" cy="160" r="50" fill="${p.accent}" opacity="0.45"/>
-      
-      <!-- Line work -->
-      <line x1="0" y1="250" x2="400" y2="250" stroke="${p.accent}" stroke-width="3" opacity="0.3"/>
-      <polyline points="50,80 120,120 180,95 240,140" stroke="${p.secondary}" stroke-width="2" fill="none" opacity="0.4"/>
-      
-      <!-- Accent accent dots -->
-      <circle cx="320" cy="80" r="12" fill="${p.accent}" opacity="0.7"/>
-      <circle cx="80" cy="380" r="8" fill="${p.accent}" opacity="0.5"/>
-      <circle cx="200" cy="420" r="15" fill="${p.secondary}" opacity="0.4"/>
-    </svg>
-  `;
-
-  // Update card background and content
-  card.style.background = p.secondary;
-  
-  // Update content text colors
-  document.getElementById('preview-headline').style.color = p.primary;
-  document.getElementById('preview-sub').style.color = p.primary;
-  document.getElementById('preview-cta').style.background = p.accent;
-  document.getElementById('preview-cta').style.color = '#ffffff';
-}
-
-/* =========================================================
-   RENDER ALL RESULTS
-   ========================================================= */
-function renderResults() {
-  renderPalette();
-  renderHarmonyExplanation();
-  renderPreview();
-
-  const results = document.getElementById('results');
-  results.classList.add('visible');
-  setTimeout(() => {
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 120);
-}
-
-/* =========================================================
-   SHUFFLE COLORS
-   ========================================================= */
-function shuffleColors() {
-  // Fisher-Yates shuffle
-  const arr = [...state.colorOrder];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  state.colorOrder = arr;
-  renderPalette();
-}
-function copyHex(hex) {
-  const text = hex.toUpperCase();
-  const fallback = () => {
-    const t = document.createElement('textarea');
-    t.value = text;
-    document.body.appendChild(t);
-    t.select();
-    try { document.execCommand('copy'); } catch(e) {}
-    document.body.removeChild(t);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).catch(fallback);
-  } else {
-    fallback();
-  }
-
-  const toast = document.getElementById('toast');
-  toast.textContent = `Copied ${text}`;
-  toast.classList.add('show');
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
-}
-
-/* =========================================================
-   EVENTS
-   ========================================================= */
-document.getElementById('generate-btn').addEventListener('click', () => {
-  if (!state.situation || !state.harmony) return;
-  generate();
+/* ── EVENTS ── */
+document.getElementById('situation-select').addEventListener('change',e=>{
+  state.situation=e.target.value||null;
+  if(state.situation)state.primaryHue=SITUASI_HUE[state.situation].hue;
+  checkReady();updateWheel();
 });
-
-document.addEventListener('click', (e) => {
-  if (e.target.closest('#regenerate-btn')) generate();
+document.getElementById('harmony-select').addEventListener('change',e=>{
+  state.harmony=e.target.value||null;
+  checkReady();updateWheel();
 });
-
-/* =========================================================
-   ELEMENT SDK
-   ========================================================= */
-function applyConfig(config) {
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el && val !== undefined) el.textContent = val;
-  };
-
-  const titleEl = document.getElementById('main-title');
-  if (titleEl && config.main_title !== undefined) {
-    const t = config.main_title;
-    if (t.toLowerCase().includes('intention')) {
-      titleEl.innerHTML = t.replace(/intention/i, m => `<em class="italic font-normal">${m}</em>`);
-    } else {
-      titleEl.textContent = t;
-    }
+function checkReady(){
+  const ok=!!(state.situation&&state.harmony);
+  document.getElementById('generate-btn').disabled=!ok;
+  const st=document.getElementById('status-text');
+  if(ok) st.textContent='Siap — buat palet warna kamu.';
+  else{
+    const m=[];if(!state.situation)m.push('Situasi');if(!state.harmony)m.push('Harmoni');
+    st.textContent='Masih perlu: '+m.join(' · ');
   }
-
-  set('eyebrow-text', config.eyebrow_text);
-  set('main-subtitle', config.main_subtitle);
-  set('step-one-title', config.step_one_title);
-  set('step-two-title', config.step_two_title);
-  set('generate-button-text', config.generate_button_text);
-  set('footer-text', config.footer_text);
 }
 
-if (window.elementSdk) {
-  window.elementSdk.init({
-    defaultConfig,
-    onConfigChange: async (config) => {
-      applyConfig({ ...defaultConfig, ...config });
-    },
-    mapToCapabilities: () => ({
-      recolorables: [],
-      borderables: [],
-      fontEditable: undefined,
-      fontSizeable: undefined
-    }),
-    mapToEditPanelValues: (config) => {
-      const merged = { ...defaultConfig, ...config };
-      return new Map([
-        ["eyebrow_text", merged.eyebrow_text],
-        ["main_title", merged.main_title],
-        ["main_subtitle", merged.main_subtitle],
-        ["step_one_title", merged.step_one_title],
-        ["step_two_title", merged.step_two_title],
-        ["generate_button_text", merged.generate_button_text],
-        ["footer_text", merged.footer_text]
-      ]);
-    }
+/* ── RENDER HASIL ── */
+document.getElementById('generate-btn').addEventListener('click',()=>{
+  if(!state.situation||!state.harmony)return;
+  state.palette=generatePalette();renderResults(true);
+});
+document.getElementById('regenerate-btn').addEventListener('click',()=>{
+  if(!state.palette)return;renderResults(true);
+});
+function renderResults(animate){
+  renderPalette(state.palette);renderPreview(state.palette);
+  document.getElementById('reason-harmony').textContent=PENJELASAN[state.harmony]||'';
+  const r=document.getElementById('results');r.classList.add('visible');
+  if(animate)setTimeout(()=>r.scrollIntoView({behavior:'smooth',block:'start'}),120);
+}
+function renderPalette(p){
+  const c=document.getElementById('palette-bars');c.innerHTML='';
+  const strip=document.createElement('div');
+  strip.style.cssText='width:100%;height:60px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:14px';
+  strip.innerHTML=`<div style="background:${p.primary};width:60%;transition:background .8s"></div><div style="background:${p.secondary};width:30%;transition:background .8s"></div><div style="background:${p.accent};width:10%;transition:background .8s"></div>`;
+  c.appendChild(strip);
+  const roles=p.mono
+    ?[{key:'primary',label:'Gelap',pct:60},{key:'secondary',label:'Sedang',pct:30},{key:'accent',label:'Terang',pct:10}]
+    :[{key:'primary',label:'Primer',pct:60},{key:'secondary',label:'Sekunder',pct:30},{key:'accent',label:'Aksen',pct:10}];
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px';
+  roles.forEach(r=>{
+    const hex=p[r.key].toUpperCase();
+    const btn=document.createElement('button');
+    btn.style.cssText='text-align:left;background:none;border:none;cursor:pointer;padding:0;transition:opacity .2s;font-family:inherit';
+    btn.onmouseenter=()=>btn.style.opacity='.6';btn.onmouseleave=()=>btn.style.opacity='1';
+    btn.innerHTML=`<div style="height:38px;border-radius:5px;background:${p[r.key]};margin-bottom:7px;border:1px solid rgba(0,0,0,.06)"></div><p style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 2px;color:var(--muted)">${r.pct}% ${r.label}</p><p style="font-size:11px;font-family:monospace;margin:0;color:var(--ink)">${hex}</p>`;
+    btn.addEventListener('click',()=>copyHex(hex));grid.appendChild(btn);
   });
+  c.appendChild(grid);
+}
+function renderPreview(p){
+  document.getElementById('preview-hook').style.background=p.primary;
+  document.getElementById('hook-inner').innerHTML=`<svg viewBox="0 0 400 480" style="width:100%;height:100%" preserveAspectRatio="xMidYMid slice"><rect width="400" height="480" fill="${p.primary}"/><ellipse cx="100" cy="120" rx="180" ry="140" fill="${p.secondary}" opacity=".5"/><circle cx="340" cy="370" r="110" fill="${p.accent}" opacity=".4"/><rect x="20" y="40" width="150" height="110" fill="${p.secondary}" opacity=".28" rx="18"/><circle cx="270" cy="155" r="46" fill="${p.accent}" opacity=".4"/><line x1="0" y1="245" x2="400" y2="245" stroke="${p.accent}" stroke-width="2.5" opacity=".22"/><circle cx="310" cy="78" r="11" fill="${p.accent}" opacity=".65"/><circle cx="78" cy="370" r="7" fill="${p.accent}" opacity=".38"/></svg>`;
+  document.getElementById('preview-card').style.background=p.secondary;
+  document.getElementById('preview-headline').style.color=p.primary;
+  document.getElementById('preview-sub').style.color=p.primary;
+  document.getElementById('preview-cta').style.cssText+=`;background:${p.accent};color:#fff`;
 }
 
-/* =========================================================
-   INIT
-   ========================================================= */
-initDropdowns();
-updateGenerateAvailability();
-lucide.createIcons();
+/* ── COPY ── */
+function copyHex(hex){
+  const fb=()=>{const t=document.createElement('textarea');t.value=hex;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(e){}document.body.removeChild(t)};
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(hex).catch(fb);else fb();
+  const toast=document.getElementById('toast');
+  toast.textContent='Disalin '+hex;toast.classList.add('show');
+  clearTimeout(window._tt);window._tt=setTimeout(()=>toast.classList.remove('show'),1600);
+}
+
+/* ── INIT ── */
+drawWheel();
+makeDots();
+initDrag();
+resetAll();
+checkReady();
+updateStrip(0);
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f1b711117ca9c7b',t:'MTc3NzEwMDEyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
