@@ -1,583 +1,1428 @@
-<!doctype html>
-<html lang="id">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mesin Keputusan Warna</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GridMind — Layout Thinking System</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#0a0a0a;--paper:#fafaf7;--muted:#6b6b6b;--line:#e8e6e0}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px}
-.serif{font-family:'Fraunces',Georgia,serif}
-#wheel-wrap{position:relative;width:300px;height:300px;flex-shrink:0;user-select:none}
-#wheel-canvas{border-radius:50%;display:block;cursor:crosshair;box-shadow: inset 0 0 0 10px white}
-.w-dot{position:absolute;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 10px rgba(0,0,0,.55);transform:translate(-50%,-50%);cursor:grab;z-index:10;transition:box-shadow .15s,transform .15s}
-.w-dot:hover{transform:translate(-50%,-50%) scale(1.3);box-shadow:0 3px 14px rgba(0,0,0,.6)}
-.w-dot.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.35)}
-#harmony-svg{position:absolute;inset:0;pointer-events:none;width:300px;height:300px}
-select{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:white;font-size:13px;cursor:pointer;color:var(--ink);transition:border-color .2s;font-family:inherit}
-select:hover{border-color:var(--ink)}
-select:focus{outline:none;border-color:var(--ink)}
-.gen-btn{display:inline-flex;align-items:center;gap:10px;padding:13px 26px;border-radius:99px;font-size:13px;font-weight:500;background:var(--ink);color:var(--paper);border:none;cursor:pointer;transition:all .25s;letter-spacing:.01em;font-family:inherit}
-.gen-btn:hover:not(:disabled){background:#222;transform:translateY(-1px)}
-.gen-btn:disabled{opacity:.3;cursor:not-allowed}
-.results{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;pointer-events:none}
-.results.visible{opacity:1;transform:none;pointer-events:auto}
-.toast{opacity:0;pointer-events:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(6px);padding:9px 18px;border-radius:99px;font-size:11px;letter-spacing:.04em;z-index:100;background:var(--ink);color:var(--paper);white-space:nowrap;transition:all .25s}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#tint-shade-strip{display:flex;height:16px;border-radius:4px;overflow:hidden;margin-top:10px;width:300px}
-.ts-cell{flex:1;transition:background .4s}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0b0e;
+  --surface:#111116;
+  --surface2:#18181f;
+  --surface3:#1e1e28;
+  --surface4:#252531;
+  --border:#2a2a38;
+  --border2:#363648;
+  --accent:#c4f135;
+  --accent-dim:#8faa22;
+  --accent2:#ff6b6b;
+  --accent3:#6bc5ff;
+  --accent4:#c084fc;
+  --text:#f2f2f8;
+  --text2:#9898b8;
+  --text3:#5a5a78;
+  --text4:#3a3a52;
+  --step1:#c4f135;
+  --step2:#6bc5ff;
+  --step3:#c084fc;
+  --step4:#ff9f6b;
+  --step5:#6bffb8;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'Plus Jakarta Sans',sans-serif;
+  --serif:'Fraunces',serif;
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--sans);color:var(--text);display:flex;flex-direction:column}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── HEADER ── */
+header{
+  height:52px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:200;
+}
+.logo{
+  font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:-.02em;
+  color:var(--text);display:flex;align-items:center;gap:6px;
+}
+.logo-dot{
+  width:10px;height:10px;background:var(--accent);border-radius:2px;flex-shrink:0;
+}
+.logo-sup{
+  font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;
+  margin-left:2px;margin-top:2px;
+}
+.hline{width:1px;height:22px;background:var(--border);flex-shrink:0}
+
+/* PHASE STEPS */
+.phases{display:flex;align-items:center;gap:0;flex:1;overflow-x:auto}
+.phase-step{
+  display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;
+  cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;
+  border:1px solid transparent;-webkit-tap-highlight-color:transparent;
+}
+.phase-step:hover{background:var(--surface2)}
+.phase-step.active{background:var(--surface3);border-color:var(--border2)}
+.phase-num{
+  width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:600;flex-shrink:0;
+  background:var(--surface4);color:var(--text3);border:1px solid var(--border);
+}
+.phase-step.active .phase-num,.phase-step.done .phase-num{
+  border:none;color:#000;
+}
+.phase-step.done .phase-num{opacity:.7}
+.phase-label{font-size:11px;font-weight:500;color:var(--text3)}
+.phase-step.active .phase-label{color:var(--text)}
+.phase-step.done .phase-label{color:var(--text3)}
+.phase-arrow{color:var(--text4);font-size:11px;margin:0 2px}
+
+.header-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-sm{
+  padding:5px 14px;border-radius:6px;border:1px solid var(--border2);background:transparent;
+  color:var(--text2);font-family:var(--mono);font-size:9px;letter-spacing:.06em;cursor:pointer;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{
+  padding:6px 16px;background:var(--accent);color:#000;border:none;border-radius:7px;
+  font-family:var(--mono);font-size:10px;font-weight:600;cursor:pointer;
+  transition:all .15s;letter-spacing:.04em;-webkit-tap-highlight-color:transparent;
+}
+.btn-primary:hover{background:#d4ff55}
+.btn-primary:disabled{opacity:.35;cursor:default}
+
+/* ── MAIN LAYOUT ── */
+.app-body{flex:1;display:grid;grid-template-columns:300px 1fr;overflow:hidden;min-height:0}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-inner{flex:1;overflow-y:auto;padding:20px 16px}
+
+.phase-panel{display:none}
+.phase-panel.active{display:block}
+
+.section-title{
+  font-family:var(--mono);font-size:8px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:12px;
+}
+
+/* INSIGHT CARD */
+.insight-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:14px;margin-bottom:16px;
+}
+.insight-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.insight-icon{font-size:14px}
+.insight-body{font-size:11px;color:var(--text2);line-height:1.65}
+
+/* OPTION CARDS */
+.option-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.option-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 13px;cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent;
+}
+.option-card:hover{border-color:var(--border2);background:var(--surface3)}
+.option-card.selected{border-color:var(--accent);background:rgba(196,241,53,.05)}
+.option-card-header{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.option-tag{
+  font-family:var(--mono);font-size:8px;font-weight:600;padding:1px 6px;border-radius:3px;
+  background:var(--surface4);color:var(--text3);letter-spacing:.06em;
+}
+.option-card.selected .option-tag{background:rgba(196,241,53,.15);color:var(--accent)}
+.option-name{font-size:11px;font-weight:600;color:var(--text)}
+.option-desc{font-size:10px;color:var(--text3);line-height:1.5}
+
+/* HIERARCHY BUILDER */
+.hier-list{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.hier-item{
+  display:flex;align-items:center;gap:8px;padding:9px 10px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  cursor:grab;transition:border-color .15s;
+}
+.hier-item:active{cursor:grabbing;border-color:var(--accent)}
+.hier-rank{
+  font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text3);
+  width:16px;text-align:center;flex-shrink:0;
+}
+.hier-color{width:5px;height:22px;border-radius:2px;flex-shrink:0}
+.hier-info{flex:1}
+.hier-name{font-size:11px;font-weight:500;color:var(--text)}
+.hier-role{font-size:9px;color:var(--text3);margin-top:1px}
+.hier-weight{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  background:var(--surface3);padding:2px 7px;border-radius:4px;
+}
+.hier-item.dragging{opacity:.4}
+
+/* CONTROLS */
+.ctrl-row{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.ctrl-label{font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;display:flex;justify-content:space-between}
+.ctrl-val{color:var(--accent);font-weight:600}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:2px;background:var(--border2);border-radius:2px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%;cursor:pointer;
+}
+
+.grid-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}
+.nr-wrap{display:flex;flex-direction:column;gap:4px}
+.nr-label{font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.nr-ctrl{display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface2)}
+.nr-btn{
+  width:30px;height:32px;border:none;background:transparent;cursor:pointer;
+  font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:color .1s;-webkit-tap-highlight-color:transparent;
+}
+.nr-btn:hover{color:var(--text)}
+.nr-val{flex:1;text-align:center;font-family:var(--mono);font-size:12px;font-weight:600;border:none;background:transparent;outline:none;color:var(--text)}
+
+/* CANVAS SIZE PRESETS */
+.preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:12px}
+.preset-btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 6px;cursor:pointer;text-align:center;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.preset-btn.selected{border-color:var(--accent);background:rgba(196,241,53,.06)}
+.preset-ratio{font-family:var(--mono);font-size:11px;font-weight:700;display:block;color:var(--text)}
+.preset-name{font-size:8px;color:var(--text3);margin-top:2px;display:block}
+.preset-btn.selected .preset-ratio{color:var(--accent)}
+
+/* RHYTHM TOGGLES */
+.toggle-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.toggle-pill{
+  padding:5px 11px;border-radius:20px;border:1px solid var(--border);
+  font-size:10px;color:var(--text2);cursor:pointer;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.toggle-pill.on{border-color:var(--accent);color:var(--accent);background:rgba(196,241,53,.08)}
+
+/* SEPARATOR */
+.sep{height:1px;background:var(--border);margin:14px 0}
+
+/* RULES panel */
+.rule-item{
+  display:flex;align-items:flex-start;gap:8px;padding:10px 11px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;
+}
+.rule-num{
+  font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);
+  width:16px;flex-shrink:0;margin-top:1px;
+}
+.rule-text{font-size:10px;color:var(--text2);line-height:1.55}
+.rule-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px}
+
+/* ── MAIN CANVAS AREA ── */
+.main-area{
+  display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
+}
+
+/* PHASE HEADER BAR */
+.phase-header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;height:44px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.phase-title{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--text)}
+.phase-desc{font-size:11px;color:var(--text3);flex:1}
+.phase-color-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* CONTENT AREA */
+.content-area{flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+
+/* ── PHASE 1: INTENT ── */
+.intent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.intent-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:18px;cursor:pointer;transition:all .2s;
+}
+.intent-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.intent-card.selected{border-color:var(--accent);background:rgba(196,241,53,.04)}
+.intent-icon{font-size:28px;margin-bottom:10px;display:block}
+.intent-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+.intent-desc{font-size:10px;color:var(--text3);line-height:1.6}
+
+/* ── PHASE 2: HIERARCHY VIZ ── */
+.hier-viz{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:20px;
+}
+.hier-viz-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.hier-strip{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end}
+.hier-block{
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:600;color:#000;
+  transition:all .3s;flex-shrink:0;
+}
+
+/* ── PHASE 3: GRID SYSTEM ── */
+.grid-systems{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.gs-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px;cursor:pointer;transition:all .2s;
+}
+.gs-card:hover{border-color:var(--border2)}
+.gs-card.selected{border-color:var(--accent);background:rgba(196,241,53,.03)}
+.gs-preview{height:90px;background:var(--surface2);border-radius:8px;margin-bottom:12px;position:relative;overflow:hidden}
+.gs-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.gs-desc{font-size:10px;color:var(--text3);line-height:1.5}
+
+/* GRID CANVAS */
+#grid-canvas-wrap{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;
+  display:flex;align-items:center;justify-content:center;
+}
+#grid-canvas{
+  background:#fff;border-radius:4px;position:relative;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 20px 60px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+
+/* ── PHASE 4: DISTRIBUTION ── */
+.layout-zones{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.zone-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;
+}
+.zone-card:hover{border-color:var(--border2)}
+.zone-card.selected{border-color:var(--accent4);background:rgba(192,132,252,.04)}
+.zone-preview{height:80px;background:var(--surface2);border-radius:7px;margin-bottom:10px;position:relative;overflow:hidden}
+.zone-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:3px}
+.zone-desc{font-size:9px;color:var(--text3)}
+
+/* DISTRIBUTION CANVAS */
+#dist-canvas{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;
+}
+#dist-svg{display:block;width:100%;height:auto}
+
+/* ── PHASE 5: OUTPUT ── */
+.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.out-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.out-label{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:.2em;color:var(--text3);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.out-copy{
+  font-family:var(--mono);font-size:8px;padding:3px 8px;border:1px solid var(--border2);
+  border-radius:4px;cursor:pointer;color:var(--text2);background:transparent;transition:all .12s;
+}
+.out-copy:hover{border-color:var(--accent);color:var(--accent)}
+.code-block{
+  font-family:var(--mono);font-size:10px;line-height:1.7;color:#9fef9f;
+  white-space:pre-wrap;word-break:break-all;max-height:180px;overflow-y:auto;
+}
+.spec-table{width:100%;border-collapse:collapse}
+.spec-table td{padding:6px 0;border-bottom:1px solid var(--border);font-size:10px}
+.spec-table td:first-child{color:var(--text3);font-family:var(--mono);font-size:9px}
+.spec-table td:last-child{text-align:right;color:var(--text);font-weight:500}
+
+.principles-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.principle-item{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.p-num{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--accent);margin-top:1px}
+.p-text{font-size:10px;color:var(--text2);line-height:1.55}
+
+/* EXPORT CARD */
+.export-canvas-wrap{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;
+}
+#exp-canvas{display:block;width:100%;height:auto}
+.exp-btns{display:flex;gap:8px}
+.exp-btn{
+  flex:1;padding:10px;text-align:center;border-radius:7px;cursor:pointer;
+  font-family:var(--mono);font-size:10px;font-weight:600;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;border:none;
+}
+
+/* ANNOTATION */
+.annotation-badge{
+  position:absolute;font-family:var(--mono);font-size:7px;font-weight:600;
+  padding:1px 5px;border-radius:3px;pointer-events:none;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:var(--surface);border:1px solid var(--border2);color:var(--text);
+  padding:8px 18px;border-radius:8px;font-family:var(--mono);font-size:10px;
+  z-index:9999;transition:transform .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+  white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* SUMMARY STRIP */
+.summary-strip{
+  display:flex;gap:8px;padding:10px 24px;background:var(--surface);border-top:1px solid var(--border);
+  flex-shrink:0;align-items:center;overflow-x:auto;
+}
+.sum-chip{
+  display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;
+  background:var(--surface2);border:1px solid var(--border);white-space:nowrap;
+}
+.sum-key{font-family:var(--mono);font-size:7px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.sum-val{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text)}
+.sum-dot{width:6px;height:6px;border-radius:1px;flex-shrink:0}
 </style>
 </head>
 <body>
 
-<header style="border-bottom:1px solid var(--line)">
-  <div style="max-width:920px;margin:0 auto;padding:18px 32px;display:flex;align-items:center;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="display:flex;gap:5px">
-        <span style="width:9px;height:9px;border-radius:50%;background:#0a0a0a;display:inline-block"></span>
-        <span style="width:9px;height:9px;border-radius:50%;background:#c94a2b;display:inline-block"></span>
-        <span style="width:9px;height:9px;border-radius:50%;background:#d4a574;display:inline-block"></span>
-      </div>
-      <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">Mesin Keputusan Warna</span>
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span>GridMind<sup class="logo-sup">β</sup></span>
+  </div>
+  <div class="hline"></div>
+  <div class="phases" id="phases-bar">
+    <div class="phase-step active" data-phase="1" onclick="goPhase(1)">
+      <div class="phase-num" id="pn1" style="background:var(--step1);color:#000">1</div>
+      <div class="phase-label">Intent</div>
     </div>
-    <div style="display:flex;gap:20px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)">
-      <span>01 Input</span><span>02 Hasil</span>
+    <div class="phase-arrow">›</div>
+    <div class="phase-step" data-phase="2" onclick="goPhase(2)">
+      <div class="phase-num" id="pn2">2</div>
+      <div class="phase-label">Hierarchy</div>
     </div>
+    <div class="phase-arrow">›</div>
+    <div class="phase-step" data-phase="3" onclick="goPhase(3)">
+      <div class="phase-num" id="pn3">3</div>
+      <div class="phase-label">Grid System</div>
+    </div>
+    <div class="phase-arrow">›</div>
+    <div class="phase-step" data-phase="4" onclick="goPhase(4)">
+      <div class="phase-num" id="pn4">4</div>
+      <div class="phase-label">Distribution</div>
+    </div>
+    <div class="phase-arrow">›</div>
+    <div class="phase-step" data-phase="5" onclick="goPhase(5)">
+      <div class="phase-num" id="pn5">5</div>
+      <div class="phase-label">Output</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-sm" onclick="resetAll()">↺ Reset</button>
+    <button class="btn-primary" id="btn-next" onclick="nextPhase()">Next →</button>
   </div>
 </header>
 
-<section style="max-width:920px;margin:0 auto;padding:52px 32px 28px">
-  <p style="font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:20px">Alat berpikir untuk desainer</p>
-  <h1 class="serif" style="font-weight:300;font-size:clamp(34px,5.5vw,68px);line-height:.95;letter-spacing:-.03em;margin-bottom:20px">Pilih warna dengan <em style="font-style:italic;font-weight:400">niat</em>, bukan naluri.</h1>
-  <p style="font-size:15px;color:var(--muted);max-width:460px;line-height:1.75">Seret titik di roda warna untuk menggeser palet. Harmoni mengunci hubungan — kamu yang menentukan suasananya.</p>
-</section>
+<!-- APP BODY -->
+<div class="app-body">
 
-<section style="max-width:920px;margin:0 auto;padding:0 32px 64px">
-  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:28px">
-    <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">01</span>
-    <h2 class="serif" style="font-size:21px;font-weight:400;letter-spacing:-.01em">Ceritakan untuk apa kamu mendesain.</h2>
-  </div>
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="sidebar-inner">
 
-  <div style="background:white;border-radius:14px;padding:36px;border:1px solid var(--line)">
-    <div style="display:grid;grid-template-columns:200px auto 1fr;gap:32px;align-items:start">
-
-      <!-- KIRI -->
-      <div style="display:flex;flex-direction:column;gap:20px">
-        <div>
-          <div style="display:flex;gap:7px;align-items:baseline;margin-bottom:9px">
-            <span style="font-size:10px;color:var(--muted)">01</span>
-            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Situasi</span>
-          </div>
-          <select id="situation-select">
-            <option value="">— Pilih —</option>
-            <option value="energy">🔥 Energi</option>
-            <option value="calm">🌊 Tenang</option>
-            <option value="growth">🌱 Tumbuh</option>
-            <option value="luxury">✨ Mewah</option>
-            <option value="playful">🎨 Ceria</option>
-            <option value="urgent">⚡ Darurat</option>
-          </select>
+    <!-- PHASE 1 SIDEBAR -->
+    <div class="phase-panel active" id="sp1">
+      <div class="section-title">Design Context</div>
+      <div class="insight-card">
+        <div class="insight-title"><span class="insight-icon">💡</span> Mengapa ini penting?</div>
+        <div class="insight-body">Sebelum memilih grid, desainer harus memahami <strong>tujuan komunikasi</strong>. Format berbeda memerlukan sistem grid yang berbeda.</div>
+      </div>
+      <div class="section-title">Format Medium</div>
+      <div class="option-group">
+        <div class="option-card selected" data-medium="social" onclick="selOption(this,'medium')">
+          <div class="option-card-header"><span class="option-tag">SOC</span><span class="option-name">Social Media</span></div>
+          <div class="option-desc">Instagram, TikTok thumbnail, Twitter/X banner, LinkedIn cover</div>
         </div>
-        <div>
-          <div style="display:flex;gap:7px;align-items:baseline;margin-bottom:9px">
-            <span style="font-size:10px;color:var(--muted)">02</span>
-            <span style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase">Harmoni</span>
-          </div>
-          <select id="harmony-select">
-            <option value="">— Pilih —</option>
-            <option value="monochromatic">Monokromatik</option>
-            <option value="analogous">Analogus</option>
-            <option value="complementary">Komplementer</option>
-            <option value="split">Split Komplementer</option>
-            <option value="triadic">Triadik</option>
-          </select>
+        <div class="option-card" data-medium="print" onclick="selOption(this,'medium')">
+          <div class="option-card-header"><span class="option-tag">PRT</span><span class="option-name">Print / Editorial</span></div>
+          <div class="option-desc">Poster, flyer, majalah, buku, packaging</div>
         </div>
-        <div>
-          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Indikator warna</p>
-          <div id="indicator-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div class="option-card" data-medium="web" onclick="selOption(this,'medium')">
+          <div class="option-card-header"><span class="option-tag">WEB</span><span class="option-name">Web / Digital UI</span></div>
+          <div class="option-desc">Website, landing page, dashboard, app</div>
+        </div>
+        <div class="option-card" data-medium="motion" onclick="selOption(this,'medium')">
+          <div class="option-card-header"><span class="option-tag">MOT</span><span class="option-name">Motion / Video</span></div>
+          <div class="option-desc">Story, Reels, YouTube thumbnail, opening title</div>
         </div>
       </div>
-
-      <!-- TENGAH: roda -->
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <div id="wheel-wrap">
-          <canvas id="wheel-canvas" width="300" height="300"></canvas>
-          <svg id="harmony-svg"></svg>
-        </div>
-        <div id="tint-shade-strip"></div>
-        <div style="display:flex;justify-content:space-between;width:300px;margin-top:5px">
-          <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">← Shade gelap</span>
-          <span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Tint terang →</span>
-        </div>
-        <p style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px">seret titik untuk ubah hue</p>
-      </div>
-
-      <!-- KANAN: readout -->
-      <div style="display:flex;flex-direction:column;gap:18px">
-        <div>
-          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Nilai hue</p>
-          <div id="hue-readout" style="display:flex;flex-direction:column;gap:8px;font-family:monospace;font-size:12px"><span style="color:var(--muted)">—</span></div>
-        </div>
-        <div id="hex-readout"></div>
-        <div>
-          <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Keterangan cincin</p>
-          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--muted)">
-            <div style="display:flex;align-items:center;gap:7px">
-              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(red,yellow,green,cyan,blue,magenta,red);display:inline-block;flex-shrink:0"></span>
-              Luar · Hue murni
-            </div>
-            <div style="display:flex;align-items:center;gap:7px">
-              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(hsl(0,55%,74%),hsl(120,55%,74%),hsl(240,55%,74%),hsl(0,55%,74%));display:inline-block;flex-shrink:0"></span>
-              Tengah · Tint (lebih terang)
-            </div>
-            <div style="display:flex;align-items:center;gap:7px">
-              <span style="width:12px;height:12px;border-radius:50%;background:conic-gradient(hsl(0,75%,26%),hsl(120,75%,26%),hsl(240,75%,26%),hsl(0,75%,26%));display:inline-block;flex-shrink:0"></span>
-              Dalam · Shade (lebih gelap)
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div style="margin-top:40px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-    <button id="generate-btn" disabled class="gen-btn">
-      <span>Buat Keputusan Warna</span>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-    </button>
-    <p id="status-text" style="font-size:12px;color:var(--muted)">Lengkapi kedua pilihan untuk melanjutkan.</p>
-  </div>
-</section>
-
-<!-- HASIL -->
-<section id="results" class="results" style="border-top:1px solid var(--line)">
-  <div style="max-width:920px;margin:0 auto;padding:60px 32px">
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:36px">
-      <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">02</span>
-      <h2 class="serif" style="font-size:21px;font-weight:400">Keputusan warna kamu.</h2>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start">
-      <div>
-        <div id="preview-card" style="border-radius:6px;overflow:hidden;aspect-ratio:4/5;display:flex;flex-direction:column">
-          <div id="preview-hook" style="flex:0 0 60%;position:relative">
-            <div id="hook-inner" style="position:absolute;inset:0"></div>
-          </div>
-          <div id="preview-content" style="flex:0 0 40%;padding:22px;display:flex;flex-direction:column;justify-content:space-between">
-            <div>
-              <p style="font-size:9px;letter-spacing:.25em;text-transform:uppercase;margin-bottom:9px">Sistem desain</p>
-              <h4 id="preview-headline" class="serif" style="font-size:21px;line-height:1.05;letter-spacing:-.02em;font-weight:400;margin-bottom:5px">Harmoni dalam keseimbangan.</h4>
-              <p id="preview-sub" style="font-size:11px;line-height:1.6">Komposisi 60 / 30 / 10.</p>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
-              <button id="preview-cta" style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:7px 14px;border-radius:99px;border:none;font-weight:500;cursor:pointer;font-family:inherit">Lihat →</button>
-              <span style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Palet</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div id="palette-bars" style="margin-bottom:20px"></div>
-        <p style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:20px">Klik warna untuk salin kode hex</p>
-        <div style="border-top:1px solid var(--line);padding-top:20px">
-          <p style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Mengapa harmoni ini</p>
-          <p id="reason-harmony" style="font-size:14px;line-height:1.75">—</p>
-          <div style="margin-top:20px">
-            <button id="regenerate-btn" style="font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:7px;font-family:inherit">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Buat ulang
-            </button>
-          </div>
-        </div>
+      <div class="sep"></div>
+      <div class="section-title">Gaya Visual</div>
+      <div class="toggle-row" id="style-toggles">
+        <div class="toggle-pill on" onclick="togglePill(this)">Minimalis</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Editorial</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Bold</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Clean</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Luxury</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Playful</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Brutalist</div>
+        <div class="toggle-pill" onclick="togglePill(this)">Organic</div>
       </div>
     </div>
-  </div>
-</section>
 
-<footer style="border-top:1px solid var(--line);margin-top:24px">
-  <div style="max-width:920px;margin:0 auto;padding:28px 32px;display:flex;justify-content:space-between;align-items:center">
-    <p style="font-size:12px;color:var(--muted)">Warna adalah perasaan. Desain dengan alasan.</p>
-    <p style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">Mesin Keputusan Warna</p>
-  </div>
-</footer>
+    <!-- PHASE 2 SIDEBAR -->
+    <div class="phase-panel" id="sp2">
+      <div class="section-title">Hierarki Elemen</div>
+      <div class="insight-card">
+        <div class="insight-title"><span class="insight-icon">🎯</span> Prinsip Visual Weight</div>
+        <div class="insight-body">Urutan ini menentukan bagaimana mata pembaca bergerak. Elemen #1 mendapat perhatian terbesar, ukuran dan kontras terkuat.</div>
+      </div>
+      <div class="section-title">Urutan Prioritas (drag untuk reorder)</div>
+      <div class="hier-list" id="hier-list" ondragover="hierDragOver(event)" ondrop="hierDrop(event)">
+        <div class="hier-item" draggable="true" data-type="visual" ondragstart="hierDragStart(event)" ondragend="hierDragEnd(event)">
+          <div class="hier-rank">1</div>
+          <div class="hier-color" style="background:#c4f135"></div>
+          <div class="hier-info"><div class="hier-name">Visual / Gambar</div><div class="hier-role">Attention grabber</div></div>
+          <div class="hier-weight">65%</div>
+        </div>
+        <div class="hier-item" draggable="true" data-type="headline" ondragstart="hierDragStart(event)" ondragend="hierDragEnd(event)">
+          <div class="hier-rank">2</div>
+          <div class="hier-color" style="background:#6bc5ff"></div>
+          <div class="hier-info"><div class="hier-name">Headline</div><div class="hier-role">Primary message</div></div>
+          <div class="hier-weight">20%</div>
+        </div>
+        <div class="hier-item" draggable="true" data-type="sub" ondragstart="hierDragStart(event)" ondragend="hierDragEnd(event)">
+          <div class="hier-rank">3</div>
+          <div class="hier-color" style="background:#c084fc"></div>
+          <div class="hier-info"><div class="hier-name">Subheadline</div><div class="hier-role">Supporting context</div></div>
+          <div class="hier-weight">8%</div>
+        </div>
+        <div class="hier-item" draggable="true" data-type="body" ondragstart="hierDragStart(event)" ondragend="hierDragEnd(event)">
+          <div class="hier-rank">4</div>
+          <div class="hier-color" style="background:#ff9f6b"></div>
+          <div class="hier-info"><div class="hier-name">Body Copy</div><div class="hier-role">Details & description</div></div>
+          <div class="hier-weight">5%</div>
+        </div>
+        <div class="hier-item" draggable="true" data-type="cta" ondragstart="hierDragStart(event)" ondragend="hierDragEnd(event)">
+          <div class="hier-rank">5</div>
+          <div class="hier-color" style="background:#6bffb8"></div>
+          <div class="hier-info"><div class="hier-name">CTA / Action</div><div class="hier-role">Conversion trigger</div></div>
+          <div class="hier-weight">2%</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="section-title">Intensitas Kontras</div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">Scale Ratio <span class="ctrl-val" id="scale-ratio-val">1.414 (√2)</span></div>
+        <input type="range" id="scale-ratio-sl" min="0" max="4" value="2" step="1" oninput="onScaleRatio()">
+      </div>
+    </div>
 
-<div id="toast" class="toast">Disalin</div>
+    <!-- PHASE 3 SIDEBAR -->
+    <div class="phase-panel" id="sp3">
+      <div class="section-title">Parameter Grid</div>
+      <div class="section-title" style="margin-top:6px">Canvas Preset</div>
+      <div class="preset-grid">
+        <div class="preset-btn selected" data-preset="1:1" onclick="selPreset(this,'1:1')"><span class="preset-ratio">1:1</span><span class="preset-name">Square</span></div>
+        <div class="preset-btn" data-preset="4:5" onclick="selPreset(this,'4:5')"><span class="preset-ratio">4:5</span><span class="preset-name">Portrait</span></div>
+        <div class="preset-btn" data-preset="9:16" onclick="selPreset(this,'9:16')"><span class="preset-ratio">9:16</span><span class="preset-name">Story</span></div>
+        <div class="preset-btn" data-preset="16:9" onclick="selPreset(this,'16:9')"><span class="preset-ratio">16:9</span><span class="preset-name">Landscape</span></div>
+        <div class="preset-btn" data-preset="A4" onclick="selPreset(this,'A4')"><span class="preset-ratio">A4</span><span class="preset-name">Print</span></div>
+        <div class="preset-btn" data-preset="2:3" onclick="selPreset(this,'2:3')"><span class="preset-ratio">2:3</span><span class="preset-name">Poster</span></div>
+      </div>
+      <div class="grid-row">
+        <div class="nr-wrap">
+          <div class="nr-label">Columns</div>
+          <div class="nr-ctrl"><button class="nr-btn" onclick="stepCols(-1)">−</button><input class="nr-val" id="col-inp" type="number" value="6" min="1" max="24" oninput="onColRow()"><button class="nr-btn" onclick="stepCols(1)">+</button></div>
+        </div>
+        <div class="nr-wrap">
+          <div class="nr-label">Rows</div>
+          <div class="nr-ctrl"><button class="nr-btn" onclick="stepRows(-1)">−</button><input class="nr-val" id="row-inp" type="number" value="6" min="1" max="24" oninput="onColRow()"><button class="nr-btn" onclick="stepRows(1)">+</button></div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">Gutter / Gap <span class="ctrl-val" id="gap-val-disp">12px</span></div>
+        <input type="range" id="gap-sl" min="0" max="48" value="12" oninput="onGap()">
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">Margin <span class="ctrl-val" id="margin-disp">16px</span></div>
+        <input type="range" id="margin-sl" min="0" max="60" value="16" oninput="onMargin()">
+      </div>
+      <div class="sep"></div>
+      <div class="section-title">Baseline Grid</div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">Unit <span class="ctrl-val" id="baseline-disp">8px</span></div>
+        <input type="range" id="baseline-sl" min="4" max="16" value="8" step="1" oninput="onBaseline()">
+      </div>
+      <div class="section-title" style="margin-top:4px">Show</div>
+      <div class="toggle-row">
+        <div class="toggle-pill on" id="tog-columns" onclick="toggleLayer(this,'columns')">Columns</div>
+        <div class="toggle-pill on" id="tog-baseline" onclick="toggleLayer(this,'baseline')">Baseline</div>
+        <div class="toggle-pill on" id="tog-margin" onclick="toggleLayer(this,'margin')">Margin</div>
+        <div class="toggle-pill" id="tog-golden" onclick="toggleLayer(this,'golden')">Golden</div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 SIDEBAR -->
+    <div class="phase-panel" id="sp4">
+      <div class="section-title">Distribusi Layout</div>
+      <div class="insight-card">
+        <div class="insight-title"><span class="insight-icon">⚖️</span> Visual Balance</div>
+        <div class="insight-body">Tentukan bagaimana elemen-elemen dari hierarki kamu akan tersebar di dalam kanvas. Pola distribusi ini membentuk "ritme" desain.</div>
+      </div>
+      <div class="section-title">Pola Distribusi</div>
+      <div class="option-group">
+        <div class="option-card selected" data-dist="hero-body" onclick="selOption(this,'dist'); buildDist()">
+          <div class="option-card-header"><span class="option-tag">F</span><span class="option-name">Hero + Body</span></div>
+          <div class="option-desc">Visual besar di atas, teks di bawah — paling efektif untuk engagement</div>
+        </div>
+        <div class="option-card" data-dist="split" onclick="selOption(this,'dist'); buildDist()">
+          <div class="option-card-header"><span class="option-tag">S</span><span class="option-name">Split 50/50</span></div>
+          <div class="option-desc">Visual dan teks berdampingan — editorial, seimbang</div>
+        </div>
+        <div class="option-card" data-dist="mosaic" onclick="selOption(this,'dist'); buildDist()">
+          <div class="option-card-header"><span class="option-tag">M</span><span class="option-name">Mosaic</span></div>
+          <div class="option-desc">Banyak blok kecil — magazine, portfolio, galeri</div>
+        </div>
+        <div class="option-card" data-dist="centered" onclick="selOption(this,'dist'); buildDist()">
+          <div class="option-card-header"><span class="option-tag">C</span><span class="option-name">Centered / Poster</span></div>
+          <div class="option-desc">Semua elemen terpusat — poster, announcement, luxury</div>
+        </div>
+        <div class="option-card" data-dist="sidebar" onclick="selOption(this,'dist'); buildDist()">
+          <div class="option-card-header"><span class="option-tag">L</span><span class="option-name">Sidebar Layout</span></div>
+          <div class="option-desc">Sidebar navigasi + konten utama — UI, web app, majalah</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="section-title">Breathing Room</div>
+      <div class="ctrl-row">
+        <div class="ctrl-label">White Space <span class="ctrl-val" id="ws-disp">40%</span></div>
+        <input type="range" id="ws-sl" min="10" max="70" value="40" oninput="onWS()">
+      </div>
+    </div>
+
+    <!-- PHASE 5 SIDEBAR -->
+    <div class="phase-panel" id="sp5">
+      <div class="section-title">Grid Principles</div>
+      <div class="rule-item"><div class="rule-num">01</div><div><div class="rule-title">Konsistensi Gutter</div><div class="rule-text">Gunakan satu nilai gutter yang konsisten di seluruh grid. Variasikan hanya ketika ada alasan hierarki yang jelas.</div></div></div>
+      <div class="rule-item"><div class="rule-num">02</div><div><div class="rule-title">Breathing Room</div><div class="rule-text">Whitespace bukan ruang kosong — ia adalah elemen desain yang aktif memberikan ritme dan keterbacaan.</div></div></div>
+      <div class="rule-item"><div class="rule-num">03</div><div><div class="rule-title">Alignment Axis</div><div class="rule-text">Setiap elemen harus aligned ke setidaknya satu sumbu vertikal atau horizontal dari grid.</div></div></div>
+      <div class="rule-item"><div class="rule-num">04</div><div><div class="rule-title">Break the Grid</div><div class="rule-text">Grid dibuat untuk dilanggar secara strategis. Satu elemen yang keluar grid menciptakan focal point kuat.</div></div></div>
+      <div class="rule-item"><div class="rule-num">05</div><div><div class="rule-title">Baseline Rhythm</div><div class="rule-text">Line-height dan spacing vertikal harus kelipatan unit baseline untuk harmoni tipografi.</div></div></div>
+    </div>
+
+  </div>
+  <!-- SUMMARY STRIP -->
+  <div class="summary-strip" id="summary-strip">
+    <div class="sum-chip"><div class="sum-dot" style="background:var(--step1)"></div><div class="sum-key">Medium</div><div class="sum-val" id="sum-medium">Social</div></div>
+    <div class="sum-chip"><div class="sum-dot" style="background:var(--step2)"></div><div class="sum-key">Grid</div><div class="sum-val" id="sum-grid">6×6</div></div>
+    <div class="sum-chip"><div class="sum-dot" style="background:var(--step3)"></div><div class="sum-key">Gap</div><div class="sum-val" id="sum-gap">12px</div></div>
+    <div class="sum-chip"><div class="sum-dot" style="background:var(--step4)"></div><div class="sum-key">Dist</div><div class="sum-val" id="sum-dist">Hero</div></div>
+  </div>
+</div>
+
+<!-- ══ MAIN AREA ══ -->
+<div class="main-area">
+  <div class="phase-header" id="phase-header">
+    <div class="phase-color-dot" id="ph-dot" style="background:var(--step1)"></div>
+    <div class="phase-title" id="ph-title">Phase 1 — Design Intent</div>
+    <div class="phase-desc" id="ph-desc">Mulai dari pertanyaan: untuk apa desain ini dibuat? Kepada siapa?</div>
+  </div>
+
+  <div class="content-area" id="content-area">
+
+    <!-- PHASE 1 CONTENT -->
+    <div id="cp1">
+      <div class="section-title" style="margin-bottom:12px">Tujuan Komunikasi — Pilih satu</div>
+      <div class="intent-grid">
+        <div class="intent-card selected" data-intent="awareness" onclick="selIntent(this)">
+          <span class="intent-icon">📣</span>
+          <div class="intent-name">Brand Awareness</div>
+          <div class="intent-desc">Memperkenalkan merek, membangun awareness. Butuh visual yang kuat dan memorable di satu pandangan.</div>
+        </div>
+        <div class="intent-card" data-intent="info" onclick="selIntent(this)">
+          <span class="intent-icon">📊</span>
+          <div class="intent-name">Informasi / Edukasi</div>
+          <div class="intent-desc">Menyampaikan data atau fakta secara jelas. Hierarki informasi dan keterbacaan adalah prioritas utama.</div>
+        </div>
+        <div class="intent-card" data-intent="emotion" onclick="selIntent(this)">
+          <span class="intent-icon">💫</span>
+          <div class="intent-name">Emosi / Storytelling</div>
+          <div class="intent-desc">Membangkitkan perasaan tertentu. Ritme, whitespace, dan proporsi menciptakan suasana hati.</div>
+        </div>
+        <div class="intent-card" data-intent="conversion" onclick="selIntent(this)">
+          <span class="intent-icon">🎯</span>
+          <div class="intent-name">Konversi / Action</div>
+          <div class="intent-desc">Mendorong audiens melakukan sesuatu — beli, daftar, klik. CTA harus jelas dan dominan.</div>
+        </div>
+        <div class="intent-card" data-intent="identity" onclick="selIntent(this)">
+          <span class="intent-icon">✦</span>
+          <div class="intent-name">Brand Identity</div>
+          <div class="intent-desc">Memperlihatkan sistem identitas merek secara konsisten — panduan, template, sistem visual.</div>
+        </div>
+        <div class="intent-card" data-intent="wayfinding" onclick="selIntent(this)">
+          <span class="intent-icon">🗺️</span>
+          <div class="intent-name">Navigation / UI</div>
+          <div class="intent-desc">Membantu pengguna bergerak dalam sistem — wayfinding, dashboard, menu, flow interaksi.</div>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="section-title" style="margin-bottom:12px">Rekomendasi Grid Berdasarkan Intent</div>
+      <div id="intent-reco" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- PHASE 2 CONTENT -->
+    <div id="cp2" style="display:none">
+      <div class="hier-viz" id="hier-viz-card">
+        <div class="hier-viz-title">
+          <span style="display:inline-block;width:8px;height:8px;background:var(--step2);border-radius:2px"></span>
+          Visual Weight Visualization — Proporsi Ruang per Elemen
+        </div>
+        <div class="hier-strip" id="hier-strip"></div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="section-title" style="margin-bottom:12px">Aturan Tipografi Berdasarkan Hierarki</div>
+      <div id="typo-rules" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="section-title" style="margin-bottom:12px">Prinsip Visual Hierarchy</div>
+      <div class="principles-grid">
+        <div class="principle-item"><div class="p-num">01</div><div class="p-text"><strong>Size contrast</strong> — perbedaan ukuran yang dramatis (3:1 minimum) antara level 1 dan level 2 menciptakan focal point yang kuat. Ratio 1.5× tidak cukup.</div></div>
+        <div class="principle-item"><div class="p-num">02</div><div class="p-text"><strong>Weight & color</strong> — elemen paling penting mendapat bobot visual tertinggi. Gunakan warna aksen hanya pada satu elemen per komposisi.</div></div>
+        <div class="principle-item"><div class="p-num">03</div><div class="p-text"><strong>Negative space</strong> — berikan lebih banyak ruang di sekitar elemen prioritas tinggi. Whitespace adalah sinyal hierarki yang sering diabaikan.</div></div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 CONTENT -->
+    <div id="cp3" style="display:none">
+      <div class="section-title" style="margin-bottom:12px">Pilih Tipe Grid System</div>
+      <div class="grid-systems">
+        <div class="gs-card selected" data-gs="column" onclick="selGS(this)">
+          <div class="gs-preview" id="gsp-column"></div>
+          <div class="gs-name">Column Grid</div>
+          <div class="gs-desc">Grid kolom vertikal klasik. Elemen tersebar melintas beberapa kolom. Paling fleksibel.</div>
+        </div>
+        <div class="gs-card" data-gs="modular" onclick="selGS(this)">
+          <div class="gs-preview" id="gsp-modular"></div>
+          <div class="gs-name">Modular Grid</div>
+          <div class="gs-desc">Grid dengan baris dan kolom. Untuk konten kompleks dan banyak elemen kecil.</div>
+        </div>
+        <div class="gs-card" data-gs="manuscript" onclick="selGS(this)">
+          <div class="gs-preview" id="gsp-manuscript"></div>
+          <div class="gs-name">Manuscript Grid</div>
+          <div class="gs-desc">Satu blok teks utama dengan margin. Untuk editorial panjang dan buku.</div>
+        </div>
+        <div class="gs-card" data-gs="hierarchical" onclick="selGS(this)">
+          <div class="gs-preview" id="gsp-hierarchical"></div>
+          <div class="gs-name">Hierarchical Grid</div>
+          <div class="gs-desc">Grid tidak beraturan, dirancang sesuai konten. Untuk web dan UI modern.</div>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div id="grid-canvas-wrap">
+        <div id="grid-canvas"></div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 CONTENT -->
+    <div id="cp4" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="section-title" style="margin-bottom:12px">Zona Elemen dalam Kanvas</div>
+          <div class="layout-zones">
+            <!-- filled by JS -->
+          </div>
+        </div>
+        <div>
+          <div class="section-title" style="margin-bottom:12px">Distribution Preview</div>
+          <div id="dist-canvas">
+            <svg id="dist-svg" viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="340" height="300" fill="#ffffff"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 CONTENT -->
+    <div id="cp5" style="display:none">
+      <div class="output-grid">
+        <div class="out-card">
+          <div class="out-label">CSS Grid Code <button class="out-copy" onclick="copyCode('css')">Copy</button></div>
+          <div class="code-block" id="css-out"></div>
+        </div>
+        <div class="out-card">
+          <div class="out-label">Grid Specification</div>
+          <table class="spec-table" id="spec-table"></table>
+        </div>
+        <div class="out-card" style="grid-column:1/-1">
+          <div class="out-label">Export — Grid System Blueprint <button class="out-copy" onclick="exportPNG()">↓ Download PNG</button></div>
+          <div class="export-canvas-wrap">
+            <canvas id="exp-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const WS=300,CX=150,CY=150;
-const R_OUT=148,R_MID=108,R_INN=68,R_CENTER=30;
-
-/* ── GAMBAR CANVAS 3 CINCIN ── */
-function drawWheel(){
-  const canvas = document.getElementById('wheel-canvas');
-  const ctx = canvas.getContext('2d');
-
-  const size = 300;
-  const radius = 150;
-
-  const image = ctx.createImageData(size, size);
-  const data = image.data;
-
-  for(let y=0; y<size; y++){
-    for(let x=0; x<size; x++){
-      const dx = x - radius;
-      const dy = y - radius;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-
-      if(dist > radius) continue;
-
-      // HUE (dari angle)
-      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      angle = (angle + 360) % 360;
-
-      // SATURATION (dari jarak ke tengah)
-      const sat = dist / radius;
-
-      // VALUE (brightness tetap 1)
-      const val = 1;
-
-      const rgb = hsvToRgb(angle, sat, val);
-
-      const i = (y * size + x) * 4;
-      data[i] = rgb.r;
-      data[i+1] = rgb.g;
-      data[i+2] = rgb.b;
-      data[i+3] = 255;
-    }
-  }
-
-  ctx.putImageData(image, 0, 0);
-} 
-
-/* ── KONVERSI ── */
-function hslToHex(h,s,l){
-  h=((h%360)+360)%360;s=Math.max(0,Math.min(100,s))/100;l=Math.max(0,Math.min(100,l))/100;
-  const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
-  let r=0,g=0,b=0;
-  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}
-  else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
-  const t=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
-  return'#'+t(r)+t(g)+t(b);
-}
-function hueFromXY(px,py){
-  const a=Math.atan2(py-CY,px-CX)*(180/Math.PI)+90;
-  return((a%360)+360)%360;
-}
-function ringFromDist(d){
-  if(d>R_MID+1)return'outer';
-  if(d>R_INN+1)return'mid';
-  return'inner';
-}
-function posFromHueRing(hue,ring){
-  const a=(hue-90)*Math.PI/180;
-  const r=ring==='outer'?(R_OUT+R_MID)/2:ring==='mid'?(R_MID+R_INN)/2:(R_INN+R_CENTER)/2;
-  return{x:CX+r*Math.cos(a),y:CY+r*Math.sin(a)};
-}
-function hexFromHueRing(hue,ring){
-  if(ring==='outer')return hslToHex(hue,100,50);
-  if(ring==='mid')  return hslToHex(hue,55,74);
-  return                    hslToHex(hue,75,26);
-}
-function hsvToRgb(h, s, v){
-  let c = v * s;
-  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  let m = v - c;
-
-  let r=0,g=0,b=0;
-
-  if(h < 60){ r=c; g=x; }
-  else if(h < 120){ r=x; g=c; }
-  else if(h < 180){ g=c; b=x; }
-  else if(h < 240){ g=x; b=c; }
-  else if(h < 300){ r=x; b=c; }
-  else { r=c; b=x; }
-
-  return {
-    r: Math.round((r+m)*255),
-    g: Math.round((g+m)*255),
-    b: Math.round((b+m)*255)
-  };
-}
-/* ── DATA ── */
-const SITUASI_HUE={energy:{hue:0},calm:{hue:200},growth:{hue:120},luxury:{hue:290},playful:{hue:40},urgent:{hue:15}};
-const HARMONY_OFFSETS={monochromatic:[0,0,0],analogous:[0,30,60],complementary:[0,180,90],split:[0,150,210],triadic:[0,120,240]};
-const HARMONY_RINGS={monochromatic:['outer','mid','inner'],analogous:['outer','outer','outer'],complementary:['outer','outer','mid'],split:['outer','outer','outer'],triadic:['outer','outer','outer']};
-const PENJELASAN={
-  monochromatic:"Satu hue, tiga variasi kecerahan — outer (hue murni), mid (tint lebih terang), inner (shade lebih gelap). Kohesif dan elegan, ideal untuk brand yang ingin tampil konsisten.",
-  analogous:"Tiga warna berdekatan di roda warna. Menciptakan keselarasan dan ketenangan — aman, nyaman, dan natural.",
-  complementary:"Warna primer + lawannya + warna jembatan (tint). Kontras tinggi dan dinamis — menarik perhatian dengan kuat.",
-  split:"Primer + dua warna yang mengapit komplemennya. Ketegangan yang seimbang — berani tapi tidak berlebihan.",
-  triadic:"Tiga warna berjarak 120° satu sama lain. Harmoni maksimal dengan keceriaan — playful, seimbang, dan mudah diingat."
+// ══════════════════════════════
+//  STATE
+// ══════════════════════════════
+const S = {
+  phase: 1,
+  intent: 'awareness',
+  medium: 'social',
+  dist: 'hero-body',
+  gs: 'column',
+  preset: '1:1',
+  cols: 6, rows: 6, gap: 12, margin: 16, baseline: 8,
+  scaleRatio: 2,
+  layers: {columns:true, baseline:true, margin:true, golden:false},
+  whiteSpace: 40,
+  hierOrder: ['visual','headline','sub','body','cta'],
 };
 
-/* ── STATE ── */
-const state={situation:null,harmony:null,primaryHue:0,palette:null};
+const SCALE_RATIOS = ['1.25 (Major 3rd)','1.333 (Perfect 4th)','1.414 (√2)','1.5 (Perfect 5th)','1.618 (Golden)'];
+const SCALE_VALS = [1.25, 1.333, 1.414, 1.5, 1.618];
 
-/* ── DOTS ── */
-const dotEls=[];
-function makeDots(){
-  for(let i=0;i<3;i++){
-    const d=document.createElement('div');
-    d.className='w-dot';
-    d.style.cssText=`display:none;position:absolute;width:${16-i*2}px;height:${16-i*2}px`;
-    document.getElementById('wheel-wrap').appendChild(d);
-    dotEls.push(d);
+const PHASE_META = [
+  null,
+  {title:'Phase 1 — Design Intent', desc:'Mulai dari pertanyaan: untuk apa desain ini dibuat? Kepada siapa?', color:'var(--step1)'},
+  {title:'Phase 2 — Visual Hierarchy', desc:'Tentukan urutan prioritas elemen dan proporsi visual weight masing-masing.', color:'var(--step2)'},
+  {title:'Phase 3 — Grid System', desc:'Bangun struktur grid yang mendukung hierarki dan intent desain.', color:'var(--step3)'},
+  {title:'Phase 4 — Distribution', desc:'Tentukan pola distribusi elemen dalam kanvas. Ini adalah blueprint komposisi.', color:'var(--step4)'},
+  {title:'Phase 5 — Output & Export', desc:'Sistem grid kamu siap. Ekspor sebagai blueprint dan salin CSS.', color:'var(--step5)'},
+];
+
+const INTENT_RECOS = {
+  awareness: [{name:'4 Kolom Bold',cols:4,rows:2,note:'Visual besar, sedikit teks'},{name:'Rule of Thirds',cols:3,rows:3,note:'Komposisi cinematic'},{name:'Split Hero',cols:2,rows:1,note:'Dua zona dominan'}],
+  info: [{name:'8 Kolom Dense',cols:8,rows:6,note:'Banyak unit informasi'},{name:'Modular 4×4',cols:4,rows:4,note:'Grid seimbang'},{name:'5 Kolom',cols:5,rows:4,note:'Fleksibel asimetris'}],
+  emotion: [{name:'Golden Ratio',cols:5,rows:3,note:'Proporsi φ natural'},{name:'3 Kolom Luas',cols:3,rows:2,note:'Whitespace kuat'},{name:'Manuscript',cols:1,rows:1,note:'Satu fokus tunggal'}],
+  conversion: [{name:'2 Kolom CTA',cols:2,rows:3,note:'Visual + CTA jelas'},{name:'6 Kolom',cols:6,rows:4,note:'Fleksibel semua elemen'},{name:'Centered 3',cols:3,rows:2,note:'Hierarki vertikal'}],
+  identity: [{name:'12 Kolom',cols:12,rows:1,note:'Sistem paling fleksibel'},{name:'8 Kolom',cols:8,rows:4,note:'Editorial modern'},{name:'6 Kolom Modular',cols:6,rows:6,note:'Grid sistem penuh'}],
+  wayfinding: [{name:'12 Kolom UI',cols:12,rows:6,note:'Standar Bootstrap/Tailwind'},{name:'Sidebar 3+9',cols:12,rows:4,note:'Navigasi + konten'},{name:'4 Kolom App',cols:4,rows:6,note:'Mobile-first'}],
+};
+
+const EL_COLORS = {
+  visual:'#c4f135', headline:'#6bc5ff', sub:'#c084fc', body:'#ff9f6b', cta:'#6bffb8',
+};
+const EL_NAMES = {
+  visual:'Visual', headline:'Headline', sub:'Sub', body:'Body', cta:'CTA',
+};
+const BASE_WEIGHTS = {
+  visual:65, headline:20, sub:8, body:5, cta:2,
+};
+
+// Drag for hier
+let dragEl = null;
+
+// ══════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════
+function goPhase(n) {
+  if(n < 1 || n > 5) return;
+  S.phase = n;
+  // Update phase steps
+  document.querySelectorAll('.phase-step').forEach((el, i) => {
+    const ph = i*2; // index
+    el.classList.remove('active','done');
+    const pn = el.dataset.phase * 1;
+    if(pn === n) el.classList.add('active');
+    else if(pn < n) el.classList.add('done');
+  });
+  // Update num colors
+  for(let i=1;i<=5;i++) {
+    const pn = document.getElementById('pn'+i);
+    pn.style.background = 'var(--surface4)';
+    pn.style.color = 'var(--text3)';
+    pn.style.border = '1px solid var(--border)';
+    if(i === n) { pn.style.background = `var(--step${n})`; pn.style.color = '#000'; pn.style.border='none'; }
+    else if(i < n) { pn.style.background = 'var(--surface4)'; pn.style.color = 'var(--text2)'; pn.style.opacity = '.6'; }
+  }
+  // Show/hide panels
+  for(let i=1;i<=5;i++) {
+    document.getElementById('sp'+i).classList.toggle('active', i===n);
+    document.getElementById('cp'+i).style.display = i===n?'block':'none';
+  }
+  // Phase header
+  const m = PHASE_META[n];
+  document.getElementById('ph-title').textContent = m.title;
+  document.getElementById('ph-desc').textContent = m.desc;
+  document.getElementById('ph-dot').style.background = m.color;
+
+  // Phase-specific init
+  if(n===2) buildHierViz();
+  if(n===3) { buildGridPreviews(); buildGrid(); }
+  if(n===4) { buildDist(); }
+  if(n===5) { buildOutput(); }
+
+  document.getElementById('btn-next').disabled = (n === 5);
+  document.getElementById('btn-next').textContent = n === 4 ? 'Generate Output →' : 'Next →';
+}
+
+function nextPhase() { goPhase(S.phase + 1); }
+
+// ══════════════════════════════
+//  PHASE 1
+// ══════════════════════════════
+function selIntent(card) {
+  document.querySelectorAll('.intent-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  S.intent = card.dataset.intent;
+  buildIntentReco();
+}
+
+function buildIntentReco() {
+  const list = INTENT_RECOS[S.intent] || [];
+  const el = document.getElementById('intent-reco');
+  el.innerHTML = list.map(r => `
+    <div class="gs-card" onclick="applyRecoGrid(${r.cols},${r.rows})" style="cursor:pointer">
+      <div style="background:var(--surface2);border-radius:8px;height:70px;margin-bottom:10px;position:relative;overflow:hidden">
+        ${miniGridSVG(r.cols, r.rows)}
+      </div>
+      <div class="gs-name">${r.name}</div>
+      <div class="gs-desc" style="margin-bottom:4px">${r.note}</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--accent)">${r.cols}×${r.rows} grid →</div>
+    </div>
+  `).join('');
+}
+
+function miniGridSVG(c, r) {
+  const W=200, H=100, g=4, m=6;
+  const cw = (W-m*2-g*(c-1))/c;
+  const ch = (H-m*2-g*(r-1))/r;
+  let cells='';
+  for(let ri=0;ri<r;ri++) for(let ci=0;ci<c;ci++) {
+    const x=m+ci*(cw+g), y=m+ri*(ch+g);
+    cells+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="2" fill="rgba(196,241,53,.12)" stroke="rgba(196,241,53,.25)" stroke-width=".5"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">${cells}</svg>`;
+}
+
+function applyRecoGrid(c, r) {
+  S.cols = c; S.rows = r;
+  document.getElementById('col-inp').value = c;
+  document.getElementById('row-inp').value = r;
+  updateSummary();
+  showToast(`Grid ${c}×${r} diterapkan — lanjut ke Phase 3`);
+}
+
+function selOption(card, key) {
+  card.closest('.option-group,.phase-panel,.sidebar-inner').querySelectorAll(`.option-card[data-${key}]`).forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  S[key] = card.dataset[key];
+  if(key==='medium') {
+    document.getElementById('sum-medium').textContent = card.querySelector('.option-name').textContent.split('/')[0].trim().substring(0,8);
+  }
+  if(key==='dist') {
+    document.getElementById('sum-dist').textContent = card.querySelector('.option-name').textContent.split('/')[0].trim().substring(0,5);
+  }
+  updateSummary();
+}
+
+function togglePill(el) { el.classList.toggle('on'); }
+
+// ══════════════════════════════
+//  PHASE 2
+// ══════════════════════════════
+function buildHierViz() {
+  const strip = document.getElementById('hier-strip');
+  strip.innerHTML='';
+  const order = S.hierOrder;
+  const scaleR = SCALE_VALS[S.scaleRatio];
+  const baseH = 60;
+  let heights = [];
+  for(let i=0;i<order.length;i++) heights.push(Math.round(baseH * Math.pow(scaleR, order.length-1-i)));
+  const maxH = Math.max(...heights);
+
+  order.forEach((type,i) => {
+    const h = heights[i];
+    const w = Math.max(40, Math.round(BASE_WEIGHTS[type] * 2.2));
+    const el = document.createElement('div');
+    el.className='hier-block';
+    el.style.cssText=`width:${w}px;height:${h}px;background:${EL_COLORS[type]};opacity:${1-i*0.12}`;
+    el.textContent = EL_NAMES[type];
+    strip.appendChild(el);
+  });
+
+  // Typography rules
+  buildTypoRules();
+}
+
+function buildTypoRules() {
+  const cont = document.getElementById('typo-rules');
+  const base = 14;
+  const scaleR = SCALE_VALS[S.scaleRatio];
+  const order = S.hierOrder;
+  const labels = {visual:'Visual',headline:'Headline',sub:'Sub',body:'Body',cta:'CTA'};
+  const roles = {visual:'Dominant zone',headline:'Primary text',sub:'Secondary text',body:'Detail text',cta:'Action element'};
+  cont.innerHTML = order.map((type,i)=>{
+    const fs = Math.round(base * Math.pow(scaleR, order.length-1-i));
+    return `
+    <div class="gs-card" style="padding:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:6px;height:${Math.min(24,6+i*4)}px;background:${EL_COLORS[type]};border-radius:2px;flex-shrink:0"></div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--text)">${labels[type]}</div>
+          <div style="font-size:9px;color:var(--text3)">${roles[type]}</div>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2)">font-size: <span style="color:var(--accent)">${fs}px</span></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2)">line-height: <span style="color:var(--accent)">${Math.round(fs*1.4)}px</span></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text2)">rank: <span style="color:var(--accent3)">${i+1}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function onScaleRatio() {
+  S.scaleRatio = parseInt(document.getElementById('scale-ratio-sl').value);
+  document.getElementById('scale-ratio-val').textContent = SCALE_RATIOS[S.scaleRatio];
+  buildHierViz();
+}
+
+// Drag & drop hier
+function hierDragStart(e) {
+  dragEl = e.currentTarget;
+  dragEl.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function hierDragEnd(e) { dragEl && dragEl.classList.remove('dragging'); dragEl=null; }
+function hierDragOver(e) {
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  const el = e.target.closest('.hier-item');
+  if(el && el!==dragEl) {
+    const r=el.getBoundingClientRect();
+    const after=(e.clientY-r.top)>r.height/2;
+    el.parentNode.insertBefore(dragEl, after ? el.nextSibling : el);
   }
 }
-function placeDot(i,hue,ring){
-  const d=dotEls[i];if(!d)return;
-  const pos=posFromHueRing(hue,ring);
-  d.style.left=pos.x+'px';d.style.top=pos.y+'px';
-  d.style.background=hexFromHueRing(hue,ring);
-  d.style.display='block';
+function hierDrop(e) {
+  e.preventDefault();
+  const items=document.querySelectorAll('.hier-item');
+  S.hierOrder = [...items].map(i=>i.dataset.type);
+  items.forEach((item,i)=>item.querySelector('.hier-rank').textContent=i+1);
+  buildHierViz();
 }
-function hideDots(){dotEls.forEach(d=>d.style.display='none')}
 
-/* ── GARIS HARMONI ── */
-function drawLines(hues,rings){
-  const svg=document.getElementById('harmony-svg');
-  if(!hues||hues.length<2){svg.innerHTML='';return}
-  let h='';
-  for(let i=0;i<hues.length;i++){
-    const a=posFromHueRing(hues[i],rings[i]);
-    for(let j=i+1;j<hues.length;j++){
-      const b=posFromHueRing(hues[j],rings[j]);
-      h+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(10,10,10,0.22)" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+// ══════════════════════════════
+//  PHASE 3 — GRID
+// ══════════════════════════════
+let canvasW=340, canvasH=340;
+
+const PRESET_RATIOS = {
+  '1:1':[1,1], '4:5':[4,5], '9:16':[9,16], '16:9':[16,9],
+  'A4':[1,1.414], '2:3':[2,3],
+};
+
+function selPreset(btn, key) {
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.preset = key;
+  computeCanvas();
+  buildGrid();
+}
+
+function computeCanvas() {
+  const [rw,rh] = PRESET_RATIOS[S.preset]||[1,1];
+  const maxW=420, maxH=360;
+  canvasW = maxW;
+  canvasH = Math.round(maxW * rh/rw);
+  if(canvasH > maxH) { canvasH=maxH; canvasW=Math.round(maxH*rw/rh); }
+}
+
+function buildGridPreviews() {
+  drawGSPreview('column', 6, 1);
+  drawGSPreview('modular', 5, 4);
+  drawGSPreview('manuscript', 1, 1);
+  drawGSPreview('hierarchical', 4, 3, true);
+}
+
+function drawGSPreview(id, c, r, hier=false) {
+  const el = document.getElementById('gsp-'+id);
+  if(!el) return;
+  const W=el.clientWidth||200, H=90;
+  const g=3, m=6;
+  const cw=(W-m*2-g*(c-1))/c;
+  const ch=(H-m*2-g*(r-1))/r;
+  let cells='';
+  if(!hier) {
+    for(let ri=0;ri<r;ri++) for(let ci=0;ci<c;ci++) {
+      const x=m+ci*(cw+g), y=m+ri*(ch+g);
+      cells+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="2" fill="rgba(196,241,53,.12)" stroke="rgba(196,241,53,.2)" stroke-width=".5"/>`;
+    }
+  } else {
+    // Hierarchical: uneven zones
+    cells+=`<rect x="${m}" y="${m}" width="${W-m*2}" height="${H*.55}" rx="2" fill="rgba(196,241,53,.15)" stroke="rgba(196,241,53,.3)" stroke-width=".5"/>`;
+    cells+=`<rect x="${m}" y="${m+H*.6}" width="${W*.4}" height="${H*.35}" rx="2" fill="rgba(107,197,255,.12)" stroke="rgba(107,197,255,.25)" stroke-width=".5"/>`;
+    cells+=`<rect x="${m+W*.45}" y="${m+H*.6}" width="${W*.55-m}" height="${H*.35}" rx="2" fill="rgba(192,132,252,.1)" stroke="rgba(192,132,252,.2)" stroke-width=".5"/>`;
+  }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">${cells}</svg>`;
+}
+
+function selGS(card) {
+  document.querySelectorAll('.gs-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  S.gs = card.dataset.gs;
+  buildGrid();
+}
+
+function stepCols(d){S.cols=Math.max(1,Math.min(24,S.cols+d));document.getElementById('col-inp').value=S.cols;buildGrid();updateSummary();}
+function stepRows(d){S.rows=Math.max(1,Math.min(24,S.rows+d));document.getElementById('row-inp').value=S.rows;buildGrid();updateSummary();}
+function onColRow(){
+  S.cols=Math.max(1,Math.min(24,parseInt(document.getElementById('col-inp').value)||1));
+  S.rows=Math.max(1,Math.min(24,parseInt(document.getElementById('row-inp').value)||1));
+  buildGrid();updateSummary();
+}
+function onGap(){S.gap=parseInt(document.getElementById('gap-sl').value)||0;document.getElementById('gap-val-disp').textContent=S.gap+'px';buildGrid();updateSummary();}
+function onMargin(){S.margin=parseInt(document.getElementById('margin-sl').value)||0;document.getElementById('margin-disp').textContent=S.margin+'px';buildGrid();}
+function onBaseline(){S.baseline=parseInt(document.getElementById('baseline-sl').value)||8;document.getElementById('baseline-disp').textContent=S.baseline+'px';buildGrid();}
+function toggleLayer(el,key){el.classList.toggle('on');S.layers[key]=el.classList.contains('on');buildGrid();}
+
+function buildGrid() {
+  computeCanvas();
+  const cv = document.getElementById('grid-canvas');
+  cv.style.width=canvasW+'px'; cv.style.height=canvasH+'px';
+  cv.innerHTML='';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',canvasW); svg.setAttribute('height',canvasH);
+  svg.setAttribute('viewBox',`0 0 ${canvasW} ${canvasH}`);
+  svg.style.cssText='position:absolute;inset:0;pointer-events:none';
+
+  const m=S.margin, g=S.gap, c=S.cols, r=S.rows;
+  const colW = (canvasW-m*2-g*(c-1))/c;
+  const rowH = (canvasH-m*2-g*(r-1))/r;
+
+  // Margin
+  if(S.layers.margin) {
+    const mr=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    mr.setAttribute('x',m); mr.setAttribute('y',m);
+    mr.setAttribute('width',canvasW-m*2); mr.setAttribute('height',canvasH-m*2);
+    mr.setAttribute('fill','none'); mr.setAttribute('stroke','rgba(255,107,107,.4)');
+    mr.setAttribute('stroke-width','1'); mr.setAttribute('stroke-dasharray','4,3');
+    svg.appendChild(mr);
+  }
+
+  // Baseline grid
+  if(S.layers.baseline) {
+    const bl=S.baseline;
+    for(let y=m+bl;y<canvasH-m;y+=bl) {
+      const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+      ln.setAttribute('x1',m); ln.setAttribute('y1',y);
+      ln.setAttribute('x2',canvasW-m); ln.setAttribute('y2',y);
+      ln.setAttribute('stroke','rgba(107,197,255,.15)'); ln.setAttribute('stroke-width','.5');
+      svg.appendChild(ln);
     }
   }
-  svg.innerHTML=h;
+
+  // Columns
+  if(S.layers.columns) {
+    for(let ci=0;ci<c;ci++) {
+      const x=m+ci*(colW+g);
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',x); rect.setAttribute('y',m);
+      rect.setAttribute('width',colW); rect.setAttribute('height',canvasH-m*2);
+      rect.setAttribute('fill','rgba(196,241,53,.08)');
+      rect.setAttribute('stroke','rgba(196,241,53,.2)'); rect.setAttribute('stroke-width','.5');
+      svg.appendChild(rect);
+    }
+    if(S.rows > 1) {
+      for(let ri=0;ri<r;ri++) {
+        const y=m+ri*(rowH+g);
+        for(let ci=0;ci<c;ci++) {
+          const x=m+ci*(colW+g);
+          const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+          rect.setAttribute('x',x); rect.setAttribute('y',y);
+          rect.setAttribute('width',colW); rect.setAttribute('height',rowH);
+          rect.setAttribute('fill','rgba(196,241,53,.06)');
+          rect.setAttribute('stroke','rgba(196,241,53,.18)'); rect.setAttribute('stroke-width','.5');
+          svg.appendChild(rect);
+        }
+      }
+    }
+  }
+
+  // Golden ratio
+  if(S.layers.golden) {
+    const phi=1.618;
+    const gx=canvasW/phi;
+    const gy=canvasH/phi;
+    const lines=[[gx,0,gx,canvasH],[0,gy,canvasW,gy]];
+    lines.forEach(([x1,y1,x2,y2])=>{
+      const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+      ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+      ln.setAttribute('stroke','rgba(255,159,107,.5)');ln.setAttribute('stroke-width','1');
+      ln.setAttribute('stroke-dasharray','6,4');
+      svg.appendChild(ln);
+    });
+  }
+
+  // Dimension labels
+  const lbl=(x,y,txt)=>{
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('fill','rgba(150,150,180,.7)');
+    t.setAttribute('font-family','IBM Plex Mono');t.setAttribute('font-size','8');
+    t.textContent=txt; svg.appendChild(t);
+  };
+  lbl(2,10,`${c} cols × ${r} rows`);
+  lbl(2,20,`gap:${g}px margin:${m}px`);
+
+  cv.appendChild(svg);
+  updateSummary();
 }
 
-/* ── STRIP TINT/SHADE ── */
-function updateStrip(hue){
-  const strip=document.getElementById('tint-shade-strip');
-  let cells='';
-  // 10 sel: 0-2 shade gelap, 3-4 pure hue, 5-9 tint terang
-  const vals=[
-    [hue,80,15],[hue,78,22],[hue,75,30],[hue,90,40],
-    [hue,100,50],[hue,100,50],
-    [hue,65,62],[hue,55,72],[hue,45,80],[hue,35,88]
+// ══════════════════════════════
+//  PHASE 4 — DISTRIBUTION
+// ══════════════════════════════
+const DIST_ZONES = {
+  'hero-body': [
+    {name:'Hero Zone',role:'Visual / Image',color:'rgba(196,241,53,.7)',x:0,y:0,w:1,h:.6},
+    {name:'Content Zone',role:'Headline + Body',color:'rgba(107,197,255,.6)',x:0,y:.62,w:.7,h:.38},
+    {name:'CTA Zone',role:'Action Button',color:'rgba(107,255,184,.6)',x:.72,y:.72,w:.28,h:.25},
+  ],
+  'split': [
+    {name:'Visual',role:'Image / Illustration',color:'rgba(196,241,53,.7)',x:0,y:0,w:.48,h:1},
+    {name:'Content',role:'Text + CTA',color:'rgba(107,197,255,.6)',x:.52,y:0,w:.48,h:1},
+  ],
+  'mosaic': [
+    {name:'Hero',role:'Primary',color:'rgba(196,241,53,.7)',x:0,y:0,w:.66,h:.55},
+    {name:'A',role:'Secondary',color:'rgba(107,197,255,.5)',x:.68,y:0,w:.32,h:.26},
+    {name:'B',role:'Secondary',color:'rgba(192,132,252,.5)',x:.68,y:.28,w:.32,h:.26},
+    {name:'C',role:'Tertiary',color:'rgba(255,159,107,.4)',x:0,y:.57,w:.32,h:.43},
+    {name:'D',role:'Tertiary',color:'rgba(255,159,107,.3)',x:.34,y:.57,w:.32,h:.43},
+    {name:'E',role:'Tertiary',color:'rgba(255,159,107,.25)',x:.68,y:.57,w:.32,h:.43},
+  ],
+  'centered': [
+    {name:'BG',role:'Background Visual',color:'rgba(196,241,53,.15)',x:0,y:0,w:1,h:1},
+    {name:'Center Block',role:'Main Content',color:'rgba(196,241,53,.5)',x:.2,y:.25,w:.6,h:.5},
+  ],
+  'sidebar': [
+    {name:'Sidebar',role:'Navigation',color:'rgba(192,132,252,.6)',x:0,y:0,w:.25,h:1},
+    {name:'Main',role:'Primary Content',color:'rgba(107,197,255,.5)',x:.27,y:0,w:.73,h:.7},
+    {name:'Footer',role:'Actions',color:'rgba(107,255,184,.4)',x:.27,y:.72,w:.73,h:.28},
+  ],
+};
+
+function buildDist() {
+  const d = S.dist;
+  const zones = DIST_ZONES[d]||[];
+  const W=340, H=280;
+  const ws = S.whiteSpace / 100;
+  const svg = document.getElementById('dist-svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML='';
+
+  // BG
+  const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bg.setAttribute('width',W);bg.setAttribute('height',H);bg.setAttribute('fill','#ffffff');
+  svg.appendChild(bg);
+
+  // Grid lines (faint)
+  for(let i=1;i<S.cols;i++){
+    const x=i*(W/S.cols);
+    const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',x);ln.setAttribute('y1',0);ln.setAttribute('x2',x);ln.setAttribute('y2',H);
+    ln.setAttribute('stroke','rgba(196,241,53,.12)');ln.setAttribute('stroke-width','.5');
+    svg.appendChild(ln);
+  }
+
+  // Zones
+  zones.forEach(z=>{
+    const pad=4;
+    const x=z.x*W+pad, y=z.y*H+pad, w=z.w*W-pad*2, h=z.h*H-pad*2;
+    const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',x);rect.setAttribute('y',y);rect.setAttribute('width',w);rect.setAttribute('height',h);
+    rect.setAttribute('rx','3');rect.setAttribute('fill',z.color);
+    svg.appendChild(rect);
+    // Label
+    if(w>30&&h>20){
+      const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+      txt.setAttribute('x',x+w/2);txt.setAttribute('y',y+h/2-5);
+      txt.setAttribute('text-anchor','middle');txt.setAttribute('fill','rgba(0,0,0,.7)');
+      txt.setAttribute('font-family','IBM Plex Mono');txt.setAttribute('font-size','9');txt.setAttribute('font-weight','600');
+      txt.textContent=z.name;svg.appendChild(txt);
+      const sub=document.createElementNS('http://www.w3.org/2000/svg','text');
+      sub.setAttribute('x',x+w/2);sub.setAttribute('y',y+h/2+8);
+      sub.setAttribute('text-anchor','middle');sub.setAttribute('fill','rgba(0,0,0,.45)');
+      sub.setAttribute('font-family','IBM Plex Mono');sub.setAttribute('font-size','7');
+      sub.textContent=z.role;svg.appendChild(sub);
+    }
+  });
+
+  // White space indicator
+  const wsText=document.createElementNS('http://www.w3.org/2000/svg','text');
+  wsText.setAttribute('x',W-4);wsText.setAttribute('y',H-4);
+  wsText.setAttribute('text-anchor','end');wsText.setAttribute('fill','rgba(100,100,140,.5)');
+  wsText.setAttribute('font-family','IBM Plex Mono');wsText.setAttribute('font-size','7');
+  wsText.textContent=`whitespace: ${S.whiteSpace}%`;
+  svg.appendChild(wsText);
+}
+
+function onWS(){
+  S.whiteSpace=parseInt(document.getElementById('ws-sl').value);
+  document.getElementById('ws-disp').textContent=S.whiteSpace+'%';
+  buildDist();
+}
+
+// ══════════════════════════════
+//  PHASE 5 — OUTPUT
+// ══════════════════════════════
+function buildOutput() {
+  // CSS
+  let css = `.container {\n  display: grid;\n  grid-template-columns: repeat(${S.cols}, 1fr);\n`;
+  if(S.rows>1) css+=`  grid-template-rows: repeat(${S.rows}, 1fr);\n`;
+  css+=`  gap: ${S.gap}px;\n  padding: ${S.margin}px;\n}\n`;
+  const scaleR = SCALE_VALS[S.scaleRatio];
+  const base=16;
+  S.hierOrder.forEach((type,i)=>{
+    const fs=Math.round(base*Math.pow(scaleR,S.hierOrder.length-1-i));
+    css+=`\n.${type} {\n  font-size: ${fs}px;\n  line-height: ${Math.round(fs*1.4)}px;\n}`;
+  });
+  document.getElementById('css-out').textContent=css;
+
+  // Spec table
+  const specs=[
+    ['Grid Type', S.gs.charAt(0).toUpperCase()+S.gs.slice(1)],
+    ['Columns', S.cols],
+    ['Rows', S.rows>1?S.rows:'auto'],
+    ['Gap / Gutter', S.gap+'px'],
+    ['Margin', S.margin+'px'],
+    ['Baseline', S.baseline+'px'],
+    ['Canvas Ratio', S.preset],
+    ['Scale Ratio', SCALE_RATIOS[S.scaleRatio]],
+    ['Medium', S.medium],
+    ['Intent', S.intent],
+    ['Distribution', S.dist],
+    ['White Space', S.whiteSpace+'%'],
   ];
-  vals.forEach(([h,s,l])=>{
-    const hex=hslToHex(h,s,l);
-    cells+=`<div class="ts-cell" style="background:${hex}" title="${hex}"></div>`;
-  });
-  strip.innerHTML=cells;
+  const tbl=document.getElementById('spec-table');
+  tbl.innerHTML=specs.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  // Export canvas
+  drawExportCanvas();
 }
 
-/* ── LEGENDA & READOUT ── */
-const RING_LABEL={outer:'Hue murni',mid:'Tint',inner:'Shade'};
+function drawExportCanvas() {
+  const el=document.getElementById('exp-canvas');
+  const W=canvasW*2, H=canvasH*2;
+  el.width=W; el.height=H;
+  el.style.width='100%'; el.style.height='auto';
+  const ctx=el.getContext('2d');
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,W,H);
 
-function updateLegend(hues,hexes,rings){
-  const isMono=state.harmony==='monochromatic';
-  const labels=isMono?['Gelap (60%)','Sedang (30%)','Terang (10%)']:['Primer (60%)','Sekunder (30%)','Aksen (10%)'];
-  document.getElementById('indicator-list').innerHTML=hues.map((h,i)=>`
-    <div style="display:flex;align-items:flex-start;gap:8px">
-      <span style="width:10px;height:10px;border-radius:50%;background:${hexes[i]};flex-shrink:0;border:1px solid rgba(0,0,0,.1);display:inline-block;margin-top:2px"></span>
-      <span style="color:var(--muted);font-size:11px;line-height:1.4">${labels[i]}<br>
-        <span style="font-size:10px;opacity:.75">${RING_LABEL[rings[i]]} · ${Math.round(h)}°</span>
-      </span>
-    </div>`).join('');
-  document.getElementById('hue-readout').innerHTML=hues.map((h,i)=>`
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:8px;height:8px;border-radius:50%;background:${hexes[i]};flex-shrink:0;border:1px solid rgba(0,0,0,.08);display:inline-block"></span>
-      <span style="color:var(--muted)">${labels[i].split(' ')[0]}</span>
-      <span style="font-weight:600;color:var(--ink)">${Math.round(h)}°</span>
-    </div>`).join('');
-  document.getElementById('hex-readout').innerHTML=`
-    <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Kode HEX</p>
-    ${hexes.map((hex,i)=>`
-    <div style="display:flex;align-items:center;gap:7px;cursor:pointer;margin-bottom:6px" onclick="copyHex('${hex.toUpperCase()}')">
-      <span style="width:9px;height:9px;border-radius:2px;background:${hex};flex-shrink:0;display:inline-block;border:1px solid rgba(0,0,0,.08)"></span>
-      <span style="font-size:11px;font-family:monospace;color:var(--ink)">${hex.toUpperCase()}</span>
-    </div>`).join('')}`;
-}
+  const m=S.margin*2, g=S.gap*2, c=S.cols, r=S.rows;
+  const colW=(W-m*2-g*(c-1))/c;
+  const rowH=(H-m*2-g*(r-1))/r;
+  const sc=2;
 
-function showSingleIndicator(hue){
-  const hex=hexFromHueRing(hue,'outer');
-  document.getElementById('indicator-list').innerHTML=`
-    <div style="display:flex;align-items:flex-start;gap:8px">
-      <span style="width:10px;height:10px;border-radius:50%;background:${hex};flex-shrink:0;border:1px solid rgba(0,0,0,.1);display:inline-block;margin-top:2px"></span>
-      <span style="color:var(--muted);font-size:11px;line-height:1.4">Primer<br>
-        <span style="font-size:10px;opacity:.75">Hue murni · ${Math.round(hue)}°</span>
-      </span>
-    </div>
-    <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4">Pilih harmoni untuk melihat semua warna →</div>`;
-  document.getElementById('hue-readout').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:8px;height:8px;border-radius:50%;background:${hex};flex-shrink:0;display:inline-block"></span>
-      <span style="color:var(--muted)">Primer</span>
-      <span style="font-weight:600;color:var(--ink)">${Math.round(hue)}°</span>
-    </div>`;
-  document.getElementById('hex-readout').innerHTML=`
-    <p style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Kode HEX</p>
-    <div style="display:flex;align-items:center;gap:7px;cursor:pointer" onclick="copyHex('${hex.toUpperCase()}')">
-      <span style="width:9px;height:9px;border-radius:2px;background:${hex};display:inline-block;border:1px solid rgba(0,0,0,.08)"></span>
-      <span style="font-size:11px;font-family:monospace;color:var(--ink)">${hex.toUpperCase()}</span>
-    </div>`;
-}
-
-function resetAll(){
-  hideDots();
-  document.getElementById('harmony-svg').innerHTML='';
-  document.getElementById('indicator-list').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px">
-      <span style="width:10px;height:10px;border-radius:50%;background:#ccc;display:inline-block"></span>
-      Pilih situasi terlebih dahulu
-    </div>`;
-  document.getElementById('hue-readout').innerHTML='<span style="color:var(--muted)">—</span>';
-  document.getElementById('hex-readout').innerHTML='';
-}
-
-/* ── UPDATE RODA ── */
-function updateWheel(){
-  const hue=state.primaryHue;
-  updateStrip(hue);
-  if(!state.situation){resetAll();return}
-  if(!state.harmony){
-    hideDots();
-    document.getElementById('harmony-svg').innerHTML='';
-    placeDot(0,hue,'outer');
-    showSingleIndicator(hue);
-    return;
+  // Columns
+  for(let ci=0;ci<c;ci++){
+    const x=m+ci*(colW+g);
+    ctx.fillStyle='rgba(196,241,53,.1)';
+    ctx.strokeStyle='rgba(196,241,53,.3)';
+    ctx.lineWidth=.5;
+    ctx.beginPath();ctx.roundRect(x,m,colW,H-m*2,2);ctx.fill();ctx.stroke();
   }
-  const offsets=HARMONY_OFFSETS[state.harmony];
-  const rings=HARMONY_RINGS[state.harmony];
-  const hues=offsets.map(o=>((hue+o)%360+360)%360);
-  const hexes=hues.map((h,i)=>hexFromHueRing(h,rings[i]));
-  hues.forEach((h,i)=>placeDot(i,h,rings[i]));
-  state.harmony==='monochromatic'?document.getElementById('harmony-svg').innerHTML='':drawLines(hues,rings);
-  updateLegend(hues,hexes,rings);
-}
 
-/* ── GENERATE PALET ── */
-function generatePalette(){
-  const hue=state.primaryHue;
-  const offsets=HARMONY_OFFSETS[state.harmony];
-  const rings=HARMONY_RINGS[state.harmony];
-  const hues=offsets.map(o=>((hue+o)%360+360)%360);
-  return{
-    primary:hexFromHueRing(hues[0],rings[0]),
-    secondary:hexFromHueRing(hues[1],rings[1]),
-    accent:hexFromHueRing(hues[2],rings[2]),
-    hues,rings,mono:state.harmony==='monochromatic'
-  };
-}
-
-/* ── DRAG ── */
-let activeDot=null;
-function initDrag(){
-  dotEls.forEach((dot,idx)=>{
-    const s=e=>{e.preventDefault();activeDot=idx;dot.classList.add('dragging')};
-    dot.addEventListener('mousedown',s);
-    dot.addEventListener('touchstart',s,{passive:false});
-  });
-  const move=e=>{
-    if(activeDot===null)return;
-    e.preventDefault();
-    const wrap=document.getElementById('wheel-wrap');
-    const rect=wrap.getBoundingClientRect();
-    const src=e.touches?e.touches[0]:e;
-    const x=src.clientX-rect.left,y=src.clientY-rect.top;
-    const dx=x-CX,dy=y-CY,dist=Math.sqrt(dx*dx+dy*dy);
-    if(dist<12)return;
-    const draggedHue=hueFromXY(x,y);
-    const offsets=HARMONY_OFFSETS[state.harmony]||[0,120,240];
-    state.primaryHue=((draggedHue-offsets[activeDot])%360+360)%360;
-    updateWheel();
-    if(state.palette){state.palette=generatePalette();renderResults(false)}
-  };
-  document.addEventListener('mousemove',move,{passive:false});
-  document.addEventListener('touchmove',move,{passive:false});
-  const end=()=>{if(activeDot!==null){dotEls[activeDot].classList.remove('dragging');activeDot=null}};
-  document.addEventListener('mouseup',end);
-  document.addEventListener('touchend',end);
-}
-
-/* ── EVENTS ── */
-document.getElementById('situation-select').addEventListener('change',e=>{
-  state.situation=e.target.value||null;
-  if(state.situation)state.primaryHue=SITUASI_HUE[state.situation].hue;
-  checkReady();updateWheel();
-});
-document.getElementById('harmony-select').addEventListener('change',e=>{
-  state.harmony=e.target.value||null;
-  checkReady();updateWheel();
-});
-function checkReady(){
-  const ok=!!(state.situation&&state.harmony);
-  document.getElementById('generate-btn').disabled=!ok;
-  const st=document.getElementById('status-text');
-  if(ok) st.textContent='Siap — buat palet warna kamu.';
-  else{
-    const m=[];if(!state.situation)m.push('Situasi');if(!state.harmony)m.push('Harmoni');
-    st.textContent='Masih perlu: '+m.join(' · ');
+  // Rows (modular)
+  if(r>1){
+    for(let ri=0;ri<r;ri++) for(let ci=0;ci<c;ci++){
+      const x=m+ci*(colW+g), y=m+ri*(rowH+g);
+      ctx.fillStyle='rgba(196,241,53,.06)';
+      ctx.strokeStyle='rgba(196,241,53,.15)';
+      ctx.lineWidth=.5;
+      ctx.beginPath();ctx.roundRect(x,y,colW,rowH,2);ctx.fill();ctx.stroke();
+    }
   }
-}
 
-/* ── RENDER HASIL ── */
-document.getElementById('generate-btn').addEventListener('click',()=>{
-  if(!state.situation||!state.harmony)return;
-  state.palette=generatePalette();renderResults(true);
-});
-document.getElementById('regenerate-btn').addEventListener('click',()=>{
-  if(!state.palette)return;renderResults(true);
-});
-function renderResults(animate){
-  renderPalette(state.palette);renderPreview(state.palette);
-  document.getElementById('reason-harmony').textContent=PENJELASAN[state.harmony]||'';
-  const r=document.getElementById('results');r.classList.add('visible');
-  if(animate)setTimeout(()=>r.scrollIntoView({behavior:'smooth',block:'start'}),120);
-}
-function renderPalette(p){
-  const c=document.getElementById('palette-bars');c.innerHTML='';
-  const strip=document.createElement('div');
-  strip.style.cssText='width:100%;height:60px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:14px';
-  strip.innerHTML=`<div style="background:${p.primary};width:60%;transition:background .8s"></div><div style="background:${p.secondary};width:30%;transition:background .8s"></div><div style="background:${p.accent};width:10%;transition:background .8s"></div>`;
-  c.appendChild(strip);
-  const roles=p.mono
-    ?[{key:'primary',label:'Gelap',pct:60},{key:'secondary',label:'Sedang',pct:30},{key:'accent',label:'Terang',pct:10}]
-    :[{key:'primary',label:'Primer',pct:60},{key:'secondary',label:'Sekunder',pct:30},{key:'accent',label:'Aksen',pct:10}];
-  const grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px';
-  roles.forEach(r=>{
-    const hex=p[r.key].toUpperCase();
-    const btn=document.createElement('button');
-    btn.style.cssText='text-align:left;background:none;border:none;cursor:pointer;padding:0;transition:opacity .2s;font-family:inherit';
-    btn.onmouseenter=()=>btn.style.opacity='.6';btn.onmouseleave=()=>btn.style.opacity='1';
-    btn.innerHTML=`<div style="height:38px;border-radius:5px;background:${p[r.key]};margin-bottom:7px;border:1px solid rgba(0,0,0,.06)"></div><p style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 2px;color:var(--muted)">${r.pct}% ${r.label}</p><p style="font-size:11px;font-family:monospace;margin:0;color:var(--ink)">${hex}</p>`;
-    btn.addEventListener('click',()=>copyHex(hex));grid.appendChild(btn);
+  // Margin border
+  ctx.strokeStyle='rgba(255,107,107,.5)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([6,4]);
+  ctx.strokeRect(m,m,W-m*2,H-m*2);
+  ctx.setLineDash([]);
+
+  // Baseline
+  for(let y=m+S.baseline*2;y<H-m;y+=S.baseline*2){
+    ctx.strokeStyle='rgba(107,197,255,.18)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(m,y);ctx.lineTo(W-m,y);ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle='rgba(80,80,140,.7)';
+  ctx.font=`600 ${10}px 'IBM Plex Mono',monospace`;
+  ctx.fillText(`GridMind Blueprint — ${c}×${r} grid / ${S.gap}px gap / ${S.margin}px margin`,m,m-8);
+
+  // Hierarchy color chips
+  const hierColors={visual:'#c4f135',headline:'#6bc5ff',sub:'#c084fc',body:'#ff9f6b',cta:'#6bffb8'};
+  S.hierOrder.forEach((type,i)=>{
+    const scaleR=SCALE_VALS[S.scaleRatio];
+    const base=14*2;
+    const fs=Math.round(base*Math.pow(scaleR,S.hierOrder.length-1-i));
+    const y=H-m+(i+1)*18;
+    ctx.fillStyle=hierColors[type]||'#888';
+    ctx.fillRect(m+i*80,H-m+8,12,12);
+    ctx.fillStyle='rgba(80,80,140,.8)';
+    ctx.font=`9px 'IBM Plex Mono',monospace`;
+    ctx.fillText(`${EL_NAMES[type]} ${Math.round(fs/2)}px`,m+i*80+16,H-m+18);
   });
-  c.appendChild(grid);
-}
-function renderPreview(p){
-  document.getElementById('preview-hook').style.background=p.primary;
-  document.getElementById('hook-inner').innerHTML=`<svg viewBox="0 0 400 480" style="width:100%;height:100%" preserveAspectRatio="xMidYMid slice"><rect width="400" height="480" fill="${p.primary}"/><ellipse cx="100" cy="120" rx="180" ry="140" fill="${p.secondary}" opacity=".5"/><circle cx="340" cy="370" r="110" fill="${p.accent}" opacity=".4"/><rect x="20" y="40" width="150" height="110" fill="${p.secondary}" opacity=".28" rx="18"/><circle cx="270" cy="155" r="46" fill="${p.accent}" opacity=".4"/><line x1="0" y1="245" x2="400" y2="245" stroke="${p.accent}" stroke-width="2.5" opacity=".22"/><circle cx="310" cy="78" r="11" fill="${p.accent}" opacity=".65"/><circle cx="78" cy="370" r="7" fill="${p.accent}" opacity=".38"/></svg>`;
-  document.getElementById('preview-card').style.background=p.secondary;
-  document.getElementById('preview-headline').style.color=p.primary;
-  document.getElementById('preview-sub').style.color=p.primary;
-  document.getElementById('preview-cta').style.cssText+=`;background:${p.accent};color:#fff`;
 }
 
-/* ── COPY ── */
-function copyHex(hex){
-  const fb=()=>{const t=document.createElement('textarea');t.value=hex;document.body.appendChild(t);t.select();try{document.execCommand('copy')}catch(e){}document.body.removeChild(t)};
-  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(hex).catch(fb);else fb();
-  const toast=document.getElementById('toast');
-  toast.textContent='Disalin '+hex;toast.classList.add('show');
-  clearTimeout(window._tt);window._tt=setTimeout(()=>toast.classList.remove('show'),1600);
+function copyCode(type) {
+  const txt=document.getElementById('css-out').textContent;
+  navigator.clipboard.writeText(txt).then(()=>showToast('CSS disalin ✓'));
 }
 
-/* ── INIT ── */
-drawWheel();
-makeDots();
-initDrag();
-resetAll();
-checkReady();
-updateStrip(0);
+function exportPNG() {
+  drawExportCanvas();
+  const el=document.getElementById('exp-canvas');
+  const a=document.createElement('a');
+  a.href=el.toDataURL('image/png');
+  a.download=`gridmind-blueprint-${S.cols}x${S.rows}-${S.preset.replace(':','')}.png`;
+  a.click();
+  showToast('Blueprint diunduh ✓');
+}
+
+// ══════════════════════════════
+//  MISC
+// ══════════════════════════════
+function updateSummary() {
+  document.getElementById('sum-grid').textContent=`${S.cols}×${S.rows}`;
+  document.getElementById('sum-gap').textContent=`${S.gap}px`;
+}
+
+function resetAll() {
+  S.phase=1; S.intent='awareness'; S.medium='social'; S.dist='hero-body'; S.gs='column';
+  S.cols=6; S.rows=6; S.gap=12; S.margin=16; S.baseline=8; S.scaleRatio=2; S.whiteSpace=40;
+  goPhase(1); buildIntentReco();
+  showToast('Reset ✓');
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+window.addEventListener('load',()=>{
+  buildIntentReco();
+  // Phase num styling
+  const pn1=document.getElementById('pn1');
+  pn1.style.background='var(--step1)'; pn1.style.color='#000'; pn1.style.border='none';
+  updateSummary();
+});
 </script>
 </body>
 </html>
